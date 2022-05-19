@@ -45,10 +45,11 @@ class MultiHeadAttention(Module):
         self.d_k = mp.d_k
         self.h = mp.h
 
-        self.w_Q = [torch.nn.Linear(d_model, d_k) for i in range(h)]
-        self.w_K = [torch.nn.Linear(d_model, d_k) for i in range(h)]
-        self.w_V = [torch.nn.Linear(d_model, d_v) for i in range(h)]
-        self.w_O = torch.nn.Linear(d_model, d_k * h)
+        # TODO make this one weight
+        self.w_Q = [torch.nn.Linear(self.d_model, self.d_k) for i in range(self.h)]
+        self.w_K = [torch.nn.Linear(self.d_model, self.d_k) for i in range(self.h)]
+        self.w_V = [torch.nn.Linear(self.d_model, self.d_v) for i in range(self.h)]
+        self.w_O = torch.nn.Linear(self.d_model, self.d_k * self.h)
 
         self.SDPA = SDPAttention(mp)
 
@@ -60,17 +61,17 @@ class MultiHeadAttention(Module):
 
         heads = []
 
-        for i in range(h):
+        for i in range(self.h):
 
             q_i = self.w_Q[i](Q)
             k_i = self.w_K[i](K)
-            v_i = self.w_v[i](V)
+            v_i = self.w_V[i](V)
 
             head = self.SDPA(q_i, k_i, v_i)
 
             heads.append(head)
 
-        x = self.w_O(torch.concat(heads, 0))
+        x = self.w_O(torch.concat(heads, 1))
 
         assert x.shape[1] == self.d_model
 

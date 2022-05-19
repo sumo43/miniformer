@@ -8,6 +8,13 @@ import time
 
 from model.attention import MultiHeadAttention
 
+class AddNorm(Module):
+    def __init__(self, mp):
+        super().__init__()
+        pass
+    def forward(self, x):
+        pass
+
 
 class EncoderBlock(Module):
 
