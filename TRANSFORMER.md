@@ -16,7 +16,7 @@ h = 8, amt of attn heads
 
 #### Encoder
 
-Input Embedding + Positional Encoding (Word2Vec?)
+Input Embedding + Positional Encoding FastText
 
 Sub Layer 1:
 Multi Head Attention -> Add residual Connection -> Layer Norm
