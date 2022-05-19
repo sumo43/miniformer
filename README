@@ -1,0 +1,10 @@
+Transformer in Pytorch
+
+
+i want to eventually use this implementation for a small machine translation task, but need to implement the model first
+
+TODO
+- implement model, non hacky implementation
+- embeddings + tokenizer
+- figure out which dataset to use
+- figure out training setup with wandb
