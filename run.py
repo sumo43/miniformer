@@ -1,4 +1,7 @@
-from transformer import Transformer, train
+from utils.general import ModelParams
 
+mp = ModelParams(512, )
 
-megatron = Transformer(n_dim, n_heads, ...)
+print(mp.d_v)
+
+#megatron = Transformer(n_dim, n_heads, ...)
