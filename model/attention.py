@@ -33,7 +33,9 @@ class SDPAttention(Module):
 
 
 class MultiHeadAttention(Module):
-    def __init__(self, mp):
+    def __init__(self, mp, masked=False):
+
+        # TODO implement masking
         super().__init__()
 
         d_k = 0
