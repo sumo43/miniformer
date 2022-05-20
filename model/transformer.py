@@ -54,16 +54,17 @@ class EncoderBlock(Module):
 
 class TransformerEncoder(Module):
     def __init__(self, mp):
-
+        
+        super().__init__()
+        self.mp = mp
         self.d_model = mp.d_model
         self.h = mp.h
 
         self.encoder = nn.Sequential(
-            [EncoderBlock(n_d, h) for i in range(n_l)])
+            *[EncoderBlock(self.mp) for i in range(self.h)])
 
     def forward(self, x):
         return self.encoder(x)
-
 
 class TransformerEmbedding:
     def __init__(self, n_d=512):

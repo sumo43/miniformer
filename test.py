@@ -30,3 +30,5 @@ print(eb(Q).shape)
 e = TransformerEncoder(mp)
 print(e(Q).shape)
 #megatron = Transformer(n_dim, n_heads, ...)
+
+print('those tests are all we need')
