@@ -1,6 +1,6 @@
 from utils.general import ModelParams
 from model.attention import SDPAttention, MultiHeadAttention
-from model.transformer import EncoderBlock, TransformerEncoder
+from model.transformer import EncoderBlock, TransformerEncoder, DecoderBlock, TransformerDecoder
 import torch
 
 # default params
@@ -29,6 +29,17 @@ print(eb(Q).shape)
 
 e = TransformerEncoder(mp)
 print(e(Q).shape)
+
+db = DecoderBlock(mp)
+
+print(db(Q, K)[1].shape)
+
+d = TransformerDecoder(mp)
+
+print(d(Q, K)[1].shape)
+
+
+
 #megatron = Transformer(n_dim, n_heads, ...)
 
 print('those tests are all we need')

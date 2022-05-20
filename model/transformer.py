@@ -86,7 +86,7 @@ class TransformerEmbedding:
 
 class DecoderBlock(Module):
     
-    def __init__(self, n_d=512, n_heads=8):
+    def __init__(self, mp):
 
         super().__init__()
 
@@ -98,7 +98,9 @@ class DecoderBlock(Module):
     
         pass
 
-    def forward(self, x, x_e):
+    def forward(self, inputs):
+
+        x, x_e = inputs
 
         # x_e is the encoder output, which we feed back in as a query and key at each layer
 
@@ -107,11 +109,11 @@ class DecoderBlock(Module):
         assert x.shape[1] == self.d_model
 
         x_prev = x
-        x = self.mha(*self.expand(x))
+        x = self.mha_1(*self.expand(x))
         x = self.add_norm(x_prev, x)
         x_prev = x
         V = x
-        x = self.mha_2(*self.expandQK(x_e), V)
+        x = self.mha_2(*self.expand_QK(x_e), V)
         x = self.add_norm(x_prev, x)
         x_prev = x
         x = self.ff(x)
@@ -119,7 +121,7 @@ class DecoderBlock(Module):
         
         assert x.shape[1] == self.d_model
 
-        return x, x_e
+        return (x, x_e)
     
     def expand_QK(self, x):
 
@@ -127,21 +129,30 @@ class DecoderBlock(Module):
         K = x.clone()
 
         return (Q, K)
+    
+    def expand(self, x):
+        Q = x.clone()
+        K = x.clone()
+        V = x.clone()
 
+        return (Q, K, V)
 
 class TransformerDecoder(Module):
     def __init__(self, mp):
 
+        super().__init__()
+
         self.mp = mp
+        self.h = mp.h
 
         self.decoder = nn.Sequential(
-            [DecoderBlock(self.mp) for i in range(n_l)])
+            *[DecoderBlock(self.mp) for i in range(self.h)])
 
-        pass
+    def forward(self, x):
 
-    def forward(self, x, x_e):
-        return self.decoder(x, x_e)
+        assert type(x) == tuple
 
+        return self.decoder(x)
 
 class Transformer:
 
