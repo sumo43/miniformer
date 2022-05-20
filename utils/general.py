@@ -1,4 +1,11 @@
 
+class PositionalEncoder(nn.Module):
+    def __init__(self):
+        super().__init__()
+    
+    def forward(self, x):
+        return x
+
 # these parameters are all you need. we pass this class to various functions
 class ModelParams():
     def __init__(self, d_model=512, h=8, n_encoders=6, n_decoders=6):

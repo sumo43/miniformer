@@ -7,6 +7,7 @@ import math
 import time
 
 from model.attention import MultiHeadAttention
+from utils.general import PositionalEncoder
 
 """
 TransformerBlock:
@@ -156,5 +157,15 @@ class TransformerDecoder(Module):
 
 class Transformer:
 
-    def __init__(self, n_d=512, n_heads=8, n_l=6):
-        pass
+    def __init__(self, mp):
+        
+        self.mp = mp
+
+        #self.embedding = TransformerEmbedding(self.mp)
+        self.pos_encoding = PositionalEncoder(self.mp)
+        self.encoder = TransformerEncoder(self.mp)
+        self.decoder = TransformerDecoder(self.mp)
+    
+    def forward(self, x):
+
+        return x
