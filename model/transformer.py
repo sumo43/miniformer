@@ -147,7 +147,7 @@ class TransformerDecoder(Module):
 
         self.decoder = nn.Sequential(
             *[DecoderBlock(self.mp) for i in range(self.h)])
-
+        
     def forward(self, x):
 
         assert type(x) == tuple

@@ -32,11 +32,13 @@ print(e(Q).shape)
 
 db = DecoderBlock(mp)
 
-print(db(Q, K)[1].shape)
+inputs = (Q, K)
+
+print(db(inputs)[1].shape)
 
 d = TransformerDecoder(mp)
 
-print(d(Q, K)[1].shape)
+print(d(inputs)[1].shape)
 
 
 
