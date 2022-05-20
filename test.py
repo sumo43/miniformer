@@ -1,5 +1,6 @@
 from utils.general import ModelParams
 from model.attention import SDPAttention, MultiHeadAttention
+from model.transformer import EncoderBlock, TransformerEncoder
 import torch
 
 # default params
@@ -22,4 +23,10 @@ K = torch.randn((1, mp.d_model))
 V = torch.randn((1, mp.d_model))
 
 mha(Q, K, V)
+
+eb = EncoderBlock(mp)
+print(eb(Q).shape)
+
+e = TransformerEncoder(mp)
+print(e(Q).shape)
 #megatron = Transformer(n_dim, n_heads, ...)

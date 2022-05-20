@@ -45,7 +45,7 @@ class MultiHeadAttention(Module):
         self.d_k = mp.d_k
         self.h = mp.h
 
-        # TODO make this one weight
+        # TODO make these each 1 weight
         self.w_Q = [torch.nn.Linear(self.d_model, self.d_k) for i in range(self.h)]
         self.w_K = [torch.nn.Linear(self.d_model, self.d_k) for i in range(self.h)]
         self.w_V = [torch.nn.Linear(self.d_model, self.d_v) for i in range(self.h)]
