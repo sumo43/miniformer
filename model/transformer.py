@@ -17,7 +17,6 @@ class TransformerBlock
 TODO change the linear layers to "expand"
 """
 
-
 class AddNorm(Module):
     def __init__(self, mp):
         super().__init__()

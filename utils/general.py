@@ -1,3 +1,4 @@
+from torch import nn
 
 class PositionalEncoder(nn.Module):
     def __init__(self):
@@ -17,6 +18,8 @@ class ModelParams():
         # d_k = d_v = d_model / h
         self.d_v = self.d_k = d_model // h
 
+    def set_ds_size(self, ds_size):
+        self.ds_size = ds_size
         """
         self.d_ff = 0
         self.train_steps = 0
