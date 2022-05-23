@@ -1,6 +1,6 @@
 from utils.general import ModelParams
 from model.attention import SDPAttention, MultiHeadAttention
-from model.transformer import EncoderBlock, TransformerEncoder, DecoderBlock, TransformerDecoder
+from model.transformer import EncoderBlock, TransformerEncoder, DecoderBlock, TransformerDecoder, Transformer
 from utils.data import load_data
 from utils.preproc import preprocess_data
 import torch
@@ -45,9 +45,8 @@ print(d(inputs)[1].shape)
 #megatron = Transformer(n_dim, n_heads, ...)
 
 train, val =  load_data(mp)
-eng, sp = preprocess_data(train, val)
+eng, sp = preprocess_data(mp, train, val, test=True)
 
-print(len(eng))
-print(len(sp))
+t = Transformer(mp)
 
 print('those tests are all we need')

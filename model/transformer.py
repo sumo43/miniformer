@@ -76,10 +76,15 @@ class TransformerEncoder(Module):
         return self.encoder(x)
 
 class TransformerEmbedding:
-    def __init__(self, n_d=512):
-        pass
+    def __init__(self, mp, size):
+
+        self.d_model = mp.d_model 
+        self.embedding = torch.nn.Embedding(size, self.d_model, padding_idx=1)
 
     def forward(self, x):
+
+        x = self.embedding(x)
+
         return x
 
 
@@ -149,21 +154,28 @@ class TransformerDecoder(Module):
         
     def forward(self, x):
 
-        assert type(x) == tuple
-
         return self.decoder(x)
 
-class Transformer:
+class Transformer(Module):
 
     def __init__(self, mp):
+
+        super().__init__()
         
         self.mp = mp
+        self.eng_vocab_size = mp.eng_vocab_size
+        self.sp_vocab_size = mp.sp_vocab_size
 
-        #self.embedding = TransformerEmbedding(self.mp)
+        self.input_embedding = TransformerEmbedding(self.mp, self.eng_vocab_size)
+        self.output_embedding = TransformerEmbedding(self.mp, self.sp_vocab_size)
         self.pos_encoding = PositionalEncoder(self.mp)
         self.encoder = TransformerEncoder(self.mp)
         self.decoder = TransformerDecoder(self.mp)
     
     def forward(self, x):
+
+        t_input = self.input_embedding(x)
+        encoder_output = self.encoder(t_input)
+
 
         return x

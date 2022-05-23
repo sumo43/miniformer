@@ -13,7 +13,10 @@ es_tokenizer = get_tokenizer('spacy', language='es')
 
 """
 
-def preprocess_data(train, val):
+def preprocess_data(mp, train, val, test=False):
+    if test:
+        train = train[:100]
+        val = val[:100]
     eng_tokenizer = get_tokenizer('moses', language='en')    
     train_iter = iter(train)
     eng_vocab = build_vocab_from_iterator(map(eng_tokenizer, train_iter), specials=['<unk>', '<pad>'])
@@ -21,6 +24,9 @@ def preprocess_data(train, val):
     es_tokenizer = get_tokenizer('moses', language='es')
     val_iter = iter(val)
     sp_vocab = build_vocab_from_iterator(map(es_tokenizer, val_iter), specials=['<unk>', '<pad>'])
+
+    mp.set_eng_vocab_size(len(eng_vocab))
+    mp.set_sp_vocab_size(len(sp_vocab))
 
     return eng_vocab, sp_vocab
 

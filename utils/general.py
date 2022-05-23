@@ -1,7 +1,7 @@
 from torch import nn
 
 class PositionalEncoder(nn.Module):
-    def __init__(self):
+    def __init__(self, mp):
         super().__init__()
     
     def forward(self, x):
@@ -18,9 +18,6 @@ class ModelParams():
         # d_k = d_v = d_model / h
         self.d_v = self.d_k = d_model // h
 
-    def set_ds_size(self, ds_size):
-        self.ds_size = ds_size
-        """
         self.d_ff = 0
         self.train_steps = 0
         self.dropout = 0.1
@@ -30,4 +27,12 @@ class ModelParams():
             'epsilon': 10e-9
         }
 
-        """
+    def set_ds_size(self, ds_size):
+        self.ds_size = ds_size
+    
+    def set_eng_vocab_size(self, size):
+        self.eng_vocab_size = size
+    
+    def set_sp_vocab_size(self, size):
+        self.sp_vocab_size = size
+    
