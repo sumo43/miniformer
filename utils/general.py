@@ -1,17 +1,26 @@
 from torch import nn
 import torch
+import math
 
 class PositionalEncoder(nn.Module):
     def __init__(self, mp):
         super().__init__()
 
         self.d_model = mp.d_model
+
+        # we make the max sequence length 128
+        self.encoding_tensor = torch.zeros((128, 512), requires_grad=False)
+        for pos in range(self.encoding_tensor.shape[0]):
+            for i in range(self.encoding_tensor.shape[1]):
+                if i % 2 == 0:
+                    self.encoding_tensor[pos, i] = math.sin(pos / (math.pow(10000, ((2 * i / self.d_model)))))
+                else:
+                    self.encoding_tensor[pos, i] = math.cos(pos / (math.pow(10000, ((2 * i / self.d_model)))))
     
     def forward(self, x):
-
         assert x.shape[1] == self.d_model
 
-        PE = torch.zeros(x.shape, dtype=torch.float32)
+        x = x + self.encoding_tensor[:x.shape[0], :]
 
         return x
 
