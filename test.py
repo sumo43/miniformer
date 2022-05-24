@@ -64,9 +64,6 @@ def mask(x):
     x = x + tri_mask
     return x
 
-print(mask(x))
-
-
 tr = TransformerTrainer(mp, t)
 
 print('those tests are all we need')

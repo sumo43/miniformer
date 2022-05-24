@@ -7,6 +7,22 @@ from torchtext.vocab import Vocab, build_vocab_from_iterator
 from torchtext.utils import download_from_url, extract_archive
 import io
 
+"""
+def pad_sentences(mp, ds, tokenizer, voc):
+
+    out_ds = []
+
+    for i in ds:
+        e = tokenizer(i)
+        e = ['<bos>', *e, '<eos>']
+        num_pad_tokens = mp.max_seq_length - len(e)
+        [e.append('<pad>') for i in range(num_pad_tokens)]
+
+        out_ds.append(torch.tensor([es_vocab[a] for a in e]))
+    
+    return out_ds
+"""
+
 def preprocess_data(mp, train, val, test=False):
     if test:
         train = train[:100]
@@ -18,11 +34,14 @@ def preprocess_data(mp, train, val, test=False):
     en_vocab = build_vocab_from_iterator(map(en_tokenizer, train_iter), specials=['<unk>', '<pad>', '<bos>', '<eos>'])
 
     # these will be our inputs. list of numbers corr. to list of numbers in spanish vocab
+
     in_ds = []
 
     for i in train:
         e = en_tokenizer(i)
         e = ['<bos>', *e, '<eos>']
+        num_pad_tokens = 128 - len(e)
+        [e.append('<pad>') for i in range(num_pad_tokens)] 
         in_ds.append(torch.tensor([en_vocab[a] for a in e]))
 
     es_tokenizer = get_tokenizer('moses', language='es')
@@ -34,11 +53,12 @@ def preprocess_data(mp, train, val, test=False):
     for i in val:
         e = es_tokenizer(i)
         e = ['<bos>', *e, '<eos>']
+        num_pad_tokens = 128 - len(e)
+        [e.append('<pad>') for i in range(num_pad_tokens)]
         out_ds.append(torch.tensor([es_vocab[a] for a in e]))
 
     mp.set_en_vocab_size(len(en_vocab))
     mp.set_es_vocab_size(len(es_vocab))
-    print(mp.es_vocab_size)
 
     return in_ds, out_ds, en_vocab, es_vocab
 
