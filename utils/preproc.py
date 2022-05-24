@@ -1,5 +1,6 @@
 import torchtext
 import torch
+import torch.nn.functional as F
 from torchtext.data.utils import get_tokenizer
 from collections import Counter
 from torchtext.vocab import Vocab, build_vocab_from_iterator
@@ -39,3 +40,11 @@ def preprocess_data(mp, train, val, test=False):
     mp.set_es_vocab_size(len(es_vocab))
 
     return in_ds, out_ds, en_vocab, es_vocab
+
+def postprocess_data(mp, data, vocab):
+
+    data = data.argmax(dim=1)
+
+    itos = vocab.get_itos()
+
+    return [itos[i] for i in data]

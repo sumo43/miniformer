@@ -99,7 +99,6 @@ class TransformerEmbedding(Module):
     def forward(self, x):
 
         x = self.embedding(x)
-
         return x
 
 
@@ -207,4 +206,4 @@ class Transformer(Module):
         encoder_output = self.encoder(_input)
         _output = self.decoder((_input, encoder_output))
 
-        return 
+        return _output

@@ -2,7 +2,7 @@ from utils.general import ModelParams
 from model.attention import SDPAttention, MultiHeadAttention
 from model.transformer import EncoderBlock, TransformerEncoder, DecoderBlock, TransformerDecoder, Transformer
 from utils.data import load_data
-from utils.preproc import preprocess_data
+from utils.preproc import preprocess_data, postprocess_data
 import torch
 
 # default params
@@ -49,5 +49,9 @@ print(d(inputs).shape)
 
 t = Transformer(mp)
 x = t(in_ds[0], out_ds[0])
+print(x.shape)
+
+x = postprocess_data(mp, x, sp_vocab)
+
 
 print('those tests are all we need')
