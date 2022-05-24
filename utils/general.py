@@ -93,5 +93,33 @@ class TransformerTrainer:
 
         print(loss.item())
 
+class TransformerEvaluator:
+
+    def __init__(self, mp, model, data):
+
+        # greedy search
+    
+        self.mp = mp
+        self.model = model
+        _, _, self.eng_vocab, self.sp_vocab = data
+    
+    def eval(self):
+
+        # eval until </s> token or reach max seq length
+        for i in range(1, self.train_steps):
+            self.eval_iteration(self.model, self.in_ds[i], self.out_ds[i], self.loss, self.optimizer)
+
+
+    def eval_iteration(self, model, x, y, loss_fn, optimizer):
+
+        y_pred = model(x, y)
+        optimizer.zero_grad()
+
+        loss = loss_fn(y_pred, y)
+        loss.backward()
+        optimizer.step()
+
+        print(loss.item())
+
 
     
