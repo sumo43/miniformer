@@ -4,6 +4,8 @@ My goal with this model is to for it to be reasonably good at translating 1-3 se
 Which is how 99% of people use translators, imo
 I am using a much smaller version of transformer described in the paper, the exact params are in train.py.
 
+I will upload the weights when it's done training
+
 TODO
 - Implement batching
 - good pprint
