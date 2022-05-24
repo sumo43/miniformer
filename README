@@ -1,10 +1,11 @@
 Transformer in Pytorch
 
-
-i want to eventually use this implementation for a small machine translation task, but need to implement the model first
+My goal with this model is to for it to be reasonably good at translating 1-3 sentences in English to Spanish
+Which is how 99% of people use translators, imo
+I am using a much smaller version of transformer described in the paper, the exact params are in train.py.
 
 TODO
-- implement model, non hacky implementation
-- embeddings + tokenizer
-- figure out which dataset to use
-- figure out training setup with wandb
+- Implement batching
+- good pprint
+- wandb
+- finally train???1
