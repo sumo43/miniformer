@@ -25,5 +25,3 @@ def load_data(mp, data_loc=os.path.join(os.getcwd(), DATA_DIR, 'spa.txt')):
         mp.set_ds_size(i) 
     
     return train, labels
-
-

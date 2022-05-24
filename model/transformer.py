@@ -75,8 +75,9 @@ class TransformerEncoder(Module):
     def forward(self, x):
         return self.encoder(x)
 
-class TransformerEmbedding:
+class TransformerEmbedding(Module):
     def __init__(self, mp, size):
+        super().__init__()
 
         self.d_model = mp.d_model 
         self.embedding = torch.nn.Embedding(size, self.d_model, padding_idx=1)
@@ -175,7 +176,8 @@ class Transformer(Module):
     def forward(self, x):
 
         t_input = self.input_embedding(x)
-        encoder_output = self.encoder(t_input)
+        x = self.pos_encoding(t_input)
 
+        encoder_output = self.encoder(x)
 
         return x

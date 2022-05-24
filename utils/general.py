@@ -1,10 +1,18 @@
 from torch import nn
+import torch
 
 class PositionalEncoder(nn.Module):
     def __init__(self, mp):
         super().__init__()
+
+        self.d_model = mp.d_model
     
     def forward(self, x):
+
+        assert x.shape[1] == self.d_model
+
+        PE = torch.zeros(x.shape, dtype=torch.float32)
+
         return x
 
 # these parameters are all you need. we pass this class to various functions
