@@ -5,6 +5,13 @@ from utils.data import load_data
 from utils.preproc import preprocess_data, postprocess_data, to_string
 import torch
 
+"""
+
+Series of tests for all of the individual classes that make up the model
+Mostly to ensure that the shapes of everything are correct (Also have assert statements)
+
+"""
+
 # default params
 mp = ModelParams()
 
