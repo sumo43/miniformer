@@ -1,4 +1,4 @@
-from utils.general import ModelParams
+from utils.general import ModelParams, VERY_SMOL_NUM, TransformerTrainer
 from model.attention import SDPAttention, MultiHeadAttention
 from model.transformer import EncoderBlock, TransformerEncoder, DecoderBlock, TransformerDecoder, Transformer
 from utils.data import load_data
@@ -38,21 +38,35 @@ inputs = (Q, K)
 
 print(db(inputs)[1].shape)
 
-train, val =  load_data(mp)
-in_ds, out_ds, eng_vocab, sp_vocab = preprocess_data(mp, train, val, test=True)
+inputs, outputs = load_data(mp)
+in_ds, out_ds, eng_vocab, sp_vocab = preprocess_data(mp, inputs, outputs, test=True)
 
-d = TransformerDecoder(mp)
+#d = TransformerDecoder(mp)
 
-print(d(inputs).shape)
+#print(d(inputs).shape)
 
 #megatron = Transformer(n_dim, n_heads, ...)
 
+dataset = zip(inputs, outputs)
+#
 t = Transformer(mp)
 x = t(in_ds[0], out_ds[0])
 print(x.shape)
 
 x = postprocess_data(mp, x)
-print(to_string(x))
+print(to_string(x, sp_vocab))
 
+x = torch.ones((4, 4), dtype=torch.float)
+
+def mask(x):
+    tri_mask = torch.triu(torch.ones(size=x.shape, dtype=torch.float)) * VERY_SMOL_NUM
+    print(tri_mask)
+    x = x + tri_mask
+    return x
+
+print(mask(x))
+
+
+tr = TransformerTrainer(mp, t)
 
 print('those tests are all we need')

@@ -2,6 +2,9 @@ from torch import nn
 import torch
 import math
 
+
+VERY_SMOL_NUM = -33209582095375352525228572587289578295.
+
 class PositionalEncoder(nn.Module):
     def __init__(self, mp):
         super().__init__()
@@ -56,9 +59,9 @@ class ModelParams():
 class TransformerTrainer:
     def __init__(self, mp, model):
 
-        self.beta_1 = mp.adam_params.beta_1
-        self.beta_2 = mp.adam_params.beta_2
-        self.epsilon = mp.adam_params.epsilon
+        self.beta_1 = mp.adam_params['beta_1']
+        self.beta_2 = mp.adam_params['beta_2']
+        self.epsilon = mp.adam_params['epsilon']
 
         self.dropout = mp.dropout
         self.train_steps = mp.train_steps

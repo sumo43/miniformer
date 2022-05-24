@@ -1,11 +1,13 @@
 from torch.nn import Module
+from utils.general import VERY_SMOL_NUM
 import torch
 
 
 class SDPAttention(Module):
-    def __init__(self, mp):
+    def __init__(self, mp, masked=False):
         super().__init__()
 
+        self.masked = masked
         self.d_model = mp.d_model
         self.d_v = mp.d_v
         self.d_k = mp.d_k
@@ -20,6 +22,11 @@ class SDPAttention(Module):
 
         x = torch.matmul(Q, K.T)
         x = self.scale(x)
+
+        if self.masked == True:
+            x = self.mask(x)
+
+        x = self.mask(x)
         # no mask
         x = self.softmax(x)
         x = torch.matmul(x, V)
@@ -30,6 +37,11 @@ class SDPAttention(Module):
 
     def scale(self, mat):
         return mat / torch.sqrt(torch.tensor(self.d_k))
+    
+    def mask(self, x):
+        tri_mask = torch.triu(torch.ones(size=x.shape, dtype=torch.float)) * VERY_SMOL_NUM
+        x = x + tri_mask
+        return x 
 
 
 class MultiHeadAttention(Module):
@@ -53,7 +65,7 @@ class MultiHeadAttention(Module):
         self.w_V = [torch.nn.Linear(self.d_model, self.d_v) for i in range(self.h)]
         self.w_O = torch.nn.Linear(self.d_model, self.d_k * self.h)
 
-        self.SDPA = SDPAttention(mp)
+        self.SDPA = SDPAttention(mp, masked)
 
     def forward(self, Q, K, V):
 
