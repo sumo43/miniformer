@@ -164,11 +164,11 @@ class Transformer(Module):
         super().__init__()
         
         self.mp = mp
-        self.eng_vocab_size = mp.eng_vocab_size
-        self.sp_vocab_size = mp.sp_vocab_size
+        self.en_vocab_size = mp.en_vocab_size
+        self.es_vocab_size = mp.es_vocab_size
 
-        self.input_embedding = TransformerEmbedding(self.mp, self.eng_vocab_size)
-        self.output_embedding = TransformerEmbedding(self.mp, self.sp_vocab_size)
+        self.input_embedding = TransformerEmbedding(self.mp, self.en_vocab_size)
+        self.output_embedding = TransformerEmbedding(self.mp, self.es_vocab_size)
         self.pos_encoding = PositionalEncoder(self.mp)
         self.encoder = TransformerEncoder(self.mp)
         self.decoder = TransformerDecoder(self.mp)

@@ -38,11 +38,11 @@ class ModelParams():
     def set_ds_size(self, ds_size):
         self.ds_size = ds_size
     
-    def set_eng_vocab_size(self, size):
-        self.eng_vocab_size = size
+    def set_en_vocab_size(self, size):
+        self.en_vocab_size = size
     
-    def set_sp_vocab_size(self, size):
-        self.sp_vocab_size = size
+    def set_es_vocab_size(self, size):
+        self.es_vocab_size = size
 
 class TransformerTrainer:
     def __init__(self, mp, model):

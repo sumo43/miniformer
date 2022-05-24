@@ -45,13 +45,10 @@ print(d(inputs)[1].shape)
 #megatron = Transformer(n_dim, n_heads, ...)
 
 train, val =  load_data(mp)
-eng, sp = preprocess_data(mp, train, val, test=True)
+in_ds, out_ds, eng_vocab, sp_vocab = preprocess_data(mp, train, val, test=True)
+
 
 t = Transformer(mp)
-
-test_tokens = torch.tensor([1, 2, 3, 4, 5])
-x = t(test_tokens)
-
-
+x = t(in_ds[0])
 
 print('those tests are all we need')

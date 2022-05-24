@@ -6,28 +6,36 @@ from torchtext.vocab import Vocab, build_vocab_from_iterator
 from torchtext.utils import download_from_url, extract_archive
 import io
 
-"""
-
-en_tokenizer = get_tokenizer('spacy', language='en')
-es_tokenizer = get_tokenizer('spacy', language='es')
-
-"""
-
 def preprocess_data(mp, train, val, test=False):
     if test:
         train = train[:100]
         val = val[:100]
-    eng_tokenizer = get_tokenizer('moses', language='en')    
+
+    en_tokenizer = get_tokenizer('moses', language='en')    
     train_iter = iter(train)
-    eng_vocab = build_vocab_from_iterator(map(eng_tokenizer, train_iter), specials=['<unk>', '<pad>'])
+
+    en_vocab = build_vocab_from_iterator(map(en_tokenizer, train_iter), specials=['<unk>', '<pad>', '<eos>'])
+
+    # these will be our inputs. list of numbers corr. to list of numbers in spanish vocab
+    in_ds = []
+
+    for i in train:
+        e = en_tokenizer(i)
+        e.append('<eos>')
+        in_ds.append(torch.tensor([en_vocab[a] for a in e]))
 
     es_tokenizer = get_tokenizer('moses', language='es')
     val_iter = iter(val)
-    sp_vocab = build_vocab_from_iterator(map(es_tokenizer, val_iter), specials=['<unk>', '<pad>'])
+    es_vocab = build_vocab_from_iterator(map(es_tokenizer, val_iter), specials=['<unk>', '<pad>', '<eos>'])
 
-    mp.set_eng_vocab_size(len(eng_vocab))
-    mp.set_sp_vocab_size(len(sp_vocab))
+    out_ds = []
+    
+    for i in val:
+        e = es_tokenizer(i)
+        e.append('<eos>')
+        out_ds.append(torch.tensor([es_vocab[a] for a in e]))
 
-    return eng_vocab, sp_vocab
+    mp.set_en_vocab_size(len(en_vocab))
+    mp.set_es_vocab_size(len(es_vocab))
 
-
+    return in_ds, out_ds, en_vocab, es_vocab
