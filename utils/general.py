@@ -43,4 +43,32 @@ class ModelParams():
     
     def set_sp_vocab_size(self, size):
         self.sp_vocab_size = size
+
+class TransformerTrainer:
+    def __init__(self, mp, model):
+
+        self.beta_1 = mp.adam_params.beta_1
+        self.beta_2 = mp.adam_params.beta_2
+        self.epsilon = mp.adam_params.epsilon
+
+        self.dropout = mp.dropout
+        self.train_steps = mp.train_steps
+
+        optimizer = torch.nn.Adam(model.parameters(), betas=(self.beta_1, self.beta_2))
+        loss = torch.nn.CrossEntropyLoss()
+
+        for i in range(self.train_steps):
+            self.train_iteration(model, x, y, loss, optimizer)
+        
+        return 
+
+    def train_iteration(self, model, x, y, loss_fn, optimizer):
+        y_pred = model(x)
+        optimizer.zero_grad()
+        loss = loss_fn(y, y_pred)
+        loss.backward()
+        optimizer.step()
+        return
+
+
     
