@@ -29,7 +29,7 @@ class PositionalEncoder(nn.Module):
 
 # these parameters are all you need. we pass this class to various functions
 class ModelParams():
-    def __init__(self, d_model=512, h=8, n_encoders=6, n_decoders=6):
+    def __init__(self, d_model=512, h=8, n_encoders=6, n_decoders=6, d_ff=2048):
         self.d_model = d_model
         self.h = h
         self.n_encoders = n_encoders
@@ -64,15 +64,13 @@ class TransformerTrainer:
         self.epsilon = mp.adam_params['epsilon']
 
         self.dropout = mp.dropout
-        self.train_steps = mp.train_steps
+        self.train_steps = mp.train_steps or 1000
 
-        optimizer = torch.nn.Adam(model.parameters(), betas=(self.beta_1, self.beta_2))
+        optimizer = torch.optim.Adam(model.parameters(), betas=(self.beta_1, self.beta_2))
         loss = torch.nn.CrossEntropyLoss()
 
         for i in range(self.train_steps):
             self.train_iteration(model, x, y, loss, optimizer)
-        
-        return 
 
     def train_iteration(self, model, x, y, loss_fn, optimizer):
         y_pred = model(x)
@@ -80,7 +78,6 @@ class TransformerTrainer:
         loss = loss_fn(y, y_pred)
         loss.backward()
         optimizer.step()
-        return
 
 
     
