@@ -80,7 +80,7 @@ class TransformerEmbedding(Module):
         super().__init__()
 
         self.d_model = mp.d_model 
-        self.embedding = torch.nn.Embedding(size, self.d_model, padding_idx=1)
+        self.embedding = torch.nn.Embedding(size, self.d_model, padding_idx=2)
 
     def forward(self, x):
 
@@ -96,7 +96,7 @@ class DecoderBlock(Module):
         super().__init__()
 
         self.d_model = mp.d_model
-        self.mha_1 = MultiHeadAttention(mp, masked=True)
+        self.mha_2 = MultiHeadAttention(mp, masked=True)
         self.mha_2 = MultiHeadAttention(mp)
         self.add_norm = AddNorm(mp)
         self.ff = torch.nn.Linear(self.d_model, self.d_model)
@@ -114,7 +114,7 @@ class DecoderBlock(Module):
         assert x.shape[1] == self.d_model
 
         x_prev = x
-        x = self.mha_1(*self.expand(x))
+        x = self.mha_2(*self.expand(x))
         x = self.add_norm(x_prev, x)
         x_prev = x
         V = x
@@ -175,9 +175,11 @@ class Transformer(Module):
     
     def forward(self, x):
 
+        # the input is a 1-d token vector
+        assert len(x.shape) == 1
+
         t_input = self.input_embedding(x)
         x = self.pos_encoding(t_input)
-
         encoder_output = self.encoder(x)
 
         return x

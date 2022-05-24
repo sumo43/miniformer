@@ -49,7 +49,7 @@ eng, sp = preprocess_data(mp, train, val, test=True)
 
 t = Transformer(mp)
 
-test_t = torch.zeros((1, 1, 512)).type(torch.IntTensor)
-x = t(test_t)
 
+test_tokens = torch.tensor([1, 2, 3, 4, 5])
+x = t(test_tokens)
 print('those tests are all we need')
