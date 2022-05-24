@@ -17,6 +17,20 @@ class TransformerBlock
 TODO change the linear layers to "expand"
 """
 
+class TransformerFC(Module):
+    def __init__(self, mp):
+        super().__init__()
+        self.d_model = mp.d_model
+        self.d_ff = mp.d_ff
+
+        self.fc1 = torch.nn.Linear(self.d_model, self.d_ff)
+        self.fc2 = torch.nn.Linear(self.d_ff, self.d_model)
+
+    def forward(self, x):
+        x = self.fc1(x)
+        x = self.fc2(x)
+        return x
+
 class AddNorm(Module):
     def __init__(self, mp):
         super().__init__()
@@ -38,7 +52,7 @@ class EncoderBlock(Module):
         self.d_model = mp.d_model
         self.mha = MultiHeadAttention(mp)
         self.add_norm = AddNorm(mp)
-        self.ff = torch.nn.Linear(self.d_model, self.d_model)
+        self.ff = TransformerFC(mp)
 
     def forward(self, x):
         assert x.shape[1] == self.d_model
@@ -99,16 +113,13 @@ class DecoderBlock(Module):
         self.mha_2 = MultiHeadAttention(mp, masked=True)
         self.mha_2 = MultiHeadAttention(mp)
         self.add_norm = AddNorm(mp)
-        self.ff = torch.nn.Linear(self.d_model, self.d_model)
-    
-        pass
+        self.ff = TransformerFC(mp)
 
     def forward(self, inputs):
 
         x, x_e = inputs
 
         # x_e is the encoder output, which we feed back in as a query and key at each layer
-
 
         assert x_e.shape[1] == self.d_model
         assert x.shape[1] == self.d_model
@@ -149,13 +160,25 @@ class TransformerDecoder(Module):
 
         self.mp = mp
         self.h = mp.h
+        self.d_model = mp.d_model
+        self.es_vocab_size = mp.es_vocab_size
 
         self.decoder = nn.Sequential(
             *[DecoderBlock(self.mp) for i in range(self.h)])
+        self.head = nn.Sequential(
+            TransformerFC(mp),
+            torch.nn.Linear(self.d_model, self.es_vocab_size),
+            torch.nn.Softmax(dim=-1)
+        )
         
     def forward(self, x):
 
-        return self.decoder(x)
+        assert type(x) == tuple
+
+        x = self.decoder(x)
+        x = self.head(x[0])
+
+        return x
 
 class Transformer(Module):
 
@@ -173,13 +196,15 @@ class Transformer(Module):
         self.encoder = TransformerEncoder(self.mp)
         self.decoder = TransformerDecoder(self.mp)
     
-    def forward(self, x):
+    def forward(self, _input, _output):
 
         # the input is a 1-d token vector
-        assert len(x.shape) == 1
+        assert len(_input.shape) == 1
+        assert len(_output.shape) == 1
 
-        t_input = self.input_embedding(x)
-        x = self.pos_encoding(t_input)
-        encoder_output = self.encoder(x)
+        _input = self.input_embedding(_input)
+        _input = self.pos_encoding(_input)
+        encoder_output = self.encoder(_input)
+        _output = self.decoder((_input, encoder_output))
 
-        return x
+        return 

@@ -14,25 +14,25 @@ def preprocess_data(mp, train, val, test=False):
     en_tokenizer = get_tokenizer('moses', language='en')    
     train_iter = iter(train)
 
-    en_vocab = build_vocab_from_iterator(map(en_tokenizer, train_iter), specials=['<unk>', '<pad>', '<eos>'])
+    en_vocab = build_vocab_from_iterator(map(en_tokenizer, train_iter), specials=['<unk>', '<pad>', '<bos>', '<eos>'])
 
     # these will be our inputs. list of numbers corr. to list of numbers in spanish vocab
     in_ds = []
 
     for i in train:
         e = en_tokenizer(i)
-        e.append('<eos>')
+        e = ['<bos>', *e, '<eos>']
         in_ds.append(torch.tensor([en_vocab[a] for a in e]))
 
     es_tokenizer = get_tokenizer('moses', language='es')
     val_iter = iter(val)
-    es_vocab = build_vocab_from_iterator(map(es_tokenizer, val_iter), specials=['<unk>', '<pad>', '<eos>'])
+    es_vocab = build_vocab_from_iterator(map(es_tokenizer, val_iter), specials=['<unk>', '<pad>', '<bos>', '<eos>'])
 
     out_ds = []
     
     for i in val:
         e = es_tokenizer(i)
-        e.append('<eos>')
+        e = ['<bos>', *e, '<eos>']
         out_ds.append(torch.tensor([es_vocab[a] for a in e]))
 
     mp.set_en_vocab_size(len(en_vocab))

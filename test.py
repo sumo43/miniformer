@@ -38,17 +38,16 @@ inputs = (Q, K)
 
 print(db(inputs)[1].shape)
 
-d = TransformerDecoder(mp)
-
-print(d(inputs)[1].shape)
-
-#megatron = Transformer(n_dim, n_heads, ...)
-
 train, val =  load_data(mp)
 in_ds, out_ds, eng_vocab, sp_vocab = preprocess_data(mp, train, val, test=True)
 
+d = TransformerDecoder(mp)
+
+print(d(inputs).shape)
+
+#megatron = Transformer(n_dim, n_heads, ...)
 
 t = Transformer(mp)
-x = t(in_ds[0])
+x = t(in_ds[0], out_ds[0])
 
 print('those tests are all we need')
