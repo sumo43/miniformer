@@ -38,13 +38,17 @@ def preprocess_data(mp, train, val, test=False):
 
     mp.set_en_vocab_size(len(en_vocab))
     mp.set_es_vocab_size(len(es_vocab))
+    print(mp.es_vocab_size)
 
     return in_ds, out_ds, en_vocab, es_vocab
 
-def postprocess_data(mp, data, vocab):
-
+def postprocess_data(mp, data):
     data = data.argmax(dim=1)
+    return data
 
+def to_string(data, vocab):
     itos = vocab.get_itos()
-
-    return [itos[i] for i in data]
+    st = ''
+    for i in data:
+        st += itos[i] + ' ' 
+    return st
