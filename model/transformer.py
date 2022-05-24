@@ -55,7 +55,7 @@ class EncoderBlock(Module):
         self.ff = TransformerFC(mp)
 
     def forward(self, x):
-        assert x.shape[1] == self.d_model
+        assert x.shape[-1] == self.d_model
 
         x_prev = x
         x = self.mha(*self.expand(x))
@@ -64,7 +64,7 @@ class EncoderBlock(Module):
         x = self.ff(x)
         x = self.add_norm(x_prev, x)
         
-        assert x.shape[1] == self.d_model
+        assert x.shape[-1] == self.d_model
         return x
     
     def expand(self, x):
@@ -120,8 +120,8 @@ class DecoderBlock(Module):
 
         # x_e is the encoder output, which we feed back in as a query and key at each layer
 
-        assert x_e.shape[1] == self.d_model
-        assert x.shape[1] == self.d_model
+        assert x_e.shape[-1] == self.d_model
+        assert x.shape[-1] == self.d_model
 
         x_prev = x
         x = self.mha_2(*self.expand(x))
@@ -134,7 +134,7 @@ class DecoderBlock(Module):
         x = self.ff(x)
         x = self.add_norm(x_prev, x)
         
-        assert x.shape[1] == self.d_model
+        assert x.shape[-1] == self.d_model
 
         return (x, x_e)
     

@@ -16,11 +16,11 @@ class SDPAttention(Module):
 
     def forward(self, Q, K, V):
 
-        assert Q.shape[1] == self.d_k
-        assert K.shape[1] == self.d_k
-        assert V.shape[1] == self.d_v
+        assert Q.shape[-1] == self.d_k
+        assert K.shape[-1] == self.d_k
+        assert V.shape[-1] == self.d_v
 
-        x = torch.matmul(Q, K.T)
+        x = torch.matmul(Q, K.mT)
         x = self.scale(x)
 
         if self.masked == True:
@@ -31,7 +31,7 @@ class SDPAttention(Module):
         x = self.softmax(x)
         x = torch.matmul(x, V)
 
-        assert x.shape[1] == self.d_k
+        assert x.shape[-1] == self.d_k
 
         return x
 
@@ -69,9 +69,9 @@ class MultiHeadAttention(Module):
 
     def forward(self, Q, K, V):
 
-        assert Q.shape[1] == self.d_model
-        assert K.shape[1] == self.d_model
-        assert V.shape[1] == self.d_model
+        assert Q.shape[-1] == self.d_model
+        assert K.shape[-1] == self.d_model
+        assert V.shape[-1] == self.d_model
 
         heads = []
 
@@ -85,8 +85,8 @@ class MultiHeadAttention(Module):
 
             heads.append(head)
 
-        x = self.w_O(torch.concat(heads, 1))
+        x = self.w_O(torch.concat(heads, -1))
 
-        assert x.shape[1] == self.d_model
+        assert x.shape[-1] == self.d_model
 
         return x

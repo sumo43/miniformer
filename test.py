@@ -19,17 +19,17 @@ sdpa = SDPAttention(mp)
 
 # fake qkv
 
-Q = torch.randn((1, mp.d_k))
-K = torch.randn((1, mp.d_k))
-V = torch.randn((1, mp.d_v))
+Q = torch.randn((1, 1, mp.d_k))
+K = torch.randn((1, 1, mp.d_k))
+V = torch.randn((1, 1, mp.d_v))
 
 sdpa(Q, K, V)
 
 mha = MultiHeadAttention(mp)
 
-Q = torch.randn((1, mp.d_model))
-K = torch.randn((1, mp.d_model))
-V = torch.randn((1, mp.d_model))
+Q = torch.randn((1, 1, mp.d_model))
+K = torch.randn((1, 1, mp.d_model))
+V = torch.randn((1, 1, mp.d_model))
 
 mha(Q, K, V)
 
@@ -43,7 +43,7 @@ db = DecoderBlock(mp)
 
 inputs = (Q, K)
 
-print(db(inputs)[1].shape)
+print(db(inputs)[0][1].shape)
 
 inputs, outputs = load_data(mp)
 in_ds, out_ds, eng_vocab, sp_vocab = preprocess_data(mp, inputs, outputs, test=True)
@@ -55,7 +55,8 @@ in_ds, out_ds, eng_vocab, sp_vocab = preprocess_data(mp, inputs, outputs, test=T
 #megatron = Transformer(n_dim, n_heads, ...)
 
 dataset = zip(inputs, outputs)
-#
+
+"""
 t = Transformer(mp)
 x = t(in_ds[0], out_ds[0])
 print(x.shape)
@@ -74,3 +75,4 @@ def mask(x):
 tr = TransformerTrainer(mp, t)
 
 print('those tests are all we need')
+"""

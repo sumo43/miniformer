@@ -30,12 +30,22 @@ class PositionalEncoder(nn.Module):
 
 # these parameters are all you need. we pass this class to various functions
 class ModelParams():
-    def __init__(self, d_model=512, h=8, n_encoders=6, n_decoders=6, d_ff=2048, max_seq_length=128):
+    def __init__(self, 
+        d_model=512, 
+        h=8, 
+        n_encoders=6, 
+        n_decoders=6, 
+        d_ff=2048,
+        max_seq_length=128,
+        batch_size=32
+        ):
+
         self.d_model = d_model
         self.h = h
         self.n_encoders = n_encoders
         self.n_decoders = n_decoders
         self.max_seq_length = max_seq_length
+        self.batch_size = 32
 
         # d_k = d_v = d_model / h
         self.d_v = self.d_k = d_model // h
