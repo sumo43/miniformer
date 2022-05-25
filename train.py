@@ -42,3 +42,7 @@ data = (in_ds, out_ds, eng_vocab, sp_vocab)
 t = Transformer(mp)
 tr = TransformerTrainer(mp, t, data)
 tr.train()
+
+ev = TransformerEvaluator(mp, t, data)
+
+tr.eval()

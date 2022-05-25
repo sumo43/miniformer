@@ -11,3 +11,8 @@ TODO
 - good pprint
 - wandb
 - finally train???1
+
+DEBUGGING POOR CONVERGENCE
+
+- Not masking
+- Not encoder...

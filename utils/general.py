@@ -2,7 +2,6 @@ from torch import nn
 import torch
 import math
 
-
 VERY_SMOL_NUM = -33209582095375352525228572587289578295.
 
 class PositionalEncoder(nn.Module):
@@ -36,7 +35,7 @@ class ModelParams():
         n_encoders=6, 
         n_decoders=6, 
         d_ff=2048,
-        max_seq_length=128,
+        max_seq_length=32,
         batch_size=32
         ):
 
@@ -78,7 +77,7 @@ class TransformerTrainer:
         self.epsilon = mp.adam_params['epsilon']
 
         self.dropout = mp.dropout
-        self.train_steps = mp.train_steps or 1000
+        self.train_steps = mp.train_steps or 5000
 
         self.model = model
         self.in_ds, self.out_ds, self.eng_vocab, self.sp_vocab = data
@@ -87,21 +86,23 @@ class TransformerTrainer:
         self.loss = torch.nn.CrossEntropyLoss()
     
     def train(self):
+        for i in range(100):
+            ind = i % len(self.in_ds)
+            _print = True
+            self.train_iteration(self.model, self.in_ds[ind], self.out_ds[ind], self.loss, self.optimizer, _print=_print)
 
-        for i in range(1, self.train_steps):
-            self.train_iteration(self.model, self.in_ds[i], self.out_ds[i], self.loss, self.optimizer)
-
-
-    def train_iteration(self, model, x, y, loss_fn, optimizer):
+    def train_iteration(self, model, x, y, loss_fn, optimizer, _print=False):
 
         y_pred = model(x, y)
+
         optimizer.zero_grad()
 
-        loss = loss_fn(y_pred, y)
+        loss = loss_fn(y_pred[0], y)
         loss.backward()
         optimizer.step()
 
-        print(loss.item())
+        if _print:
+            print(loss.item())
 
 class TransformerEvaluator:
 
@@ -116,8 +117,10 @@ class TransformerEvaluator:
     def eval(self):
 
         # eval until </s> token or reach max seq length
-        for i in range(1, self.train_steps):
-            self.eval_iteration(self.model, self.in_ds[i], self.out_ds[i], self.loss, self.optimizer)
+
+        for i in range(1, 10000): 
+            
+            self.eval_iteration(self.model, self.in_ds[ind], self.out_ds[ind], self.loss, self.optimizer)
 
 
     def eval_iteration(self, model, x, y, loss_fn, optimizer):

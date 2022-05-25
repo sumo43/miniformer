@@ -12,7 +12,6 @@ from utils.general import PositionalEncoder
 """
 TransformerBlock:
 TransformerEmbedding -> TransformerEncoder, which is just a list of EncoderBlock
-class TransformerBlock
 
 TODO change the linear layers to "expand"
 """
@@ -73,7 +72,6 @@ class EncoderBlock(Module):
         V = x.clone()
 
         return (Q, K, V)
-
 
 class TransformerEncoder(Module):
     def __init__(self, mp):
@@ -201,9 +199,17 @@ class Transformer(Module):
         assert len(_input.shape) == 1
         assert len(_output.shape) == 1
 
+        _input = _input.unsqueeze(0)
+        _output = _output.unsqueeze(0)
+
         _input = self.input_embedding(_input)
+        _output = self.output_embedding(_output)
+
         _input = self.pos_encoding(_input)
+        _output = self.pos_encoding(_output)
+
         encoder_output = self.encoder(_input)
-        _output = self.decoder((_input, encoder_output))
+
+        _output = self.decoder((_output, encoder_output))
 
         return _output
