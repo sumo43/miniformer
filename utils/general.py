@@ -2,6 +2,8 @@ from torch import nn
 import torch
 import math
 
+from time import sleep
+
 VERY_SMOL_NUM = -33209582095375352525228572587289578295.
 
 class PositionalEncoder(nn.Module):
@@ -23,6 +25,10 @@ class PositionalEncoder(nn.Module):
     def forward(self, x):
         assert x.shape[-1] == self.d_model
 
+        print('encoding tensor')
+
+        print(self.encoding_tensor[0])
+
         x = x + self.encoding_tensor[:x.shape[0], :]
 
         return x
@@ -36,7 +42,8 @@ class ModelParams():
         n_decoders=6, 
         d_ff=2048,
         max_seq_length=32,
-        batch_size=32
+        batch_size=32,
+        train_steps = 1000
         ):
 
         self.d_model = d_model
@@ -45,12 +52,12 @@ class ModelParams():
         self.n_decoders = n_decoders
         self.max_seq_length = max_seq_length
         self.batch_size = 32
+        self.d_ff = d_ff
+        self.train_steps = train_steps
 
         # d_k = d_v = d_model / h
         self.d_v = self.d_k = d_model // h
 
-        self.d_ff = 0
-        self.train_steps = 0
         self.dropout = 0.1
         self.adam_params = {
             'beta_1': 0.9,
@@ -86,7 +93,7 @@ class TransformerTrainer:
         self.loss = torch.nn.CrossEntropyLoss()
     
     def train(self):
-        for i in range(1000):
+        for i in range(100000):
             ind = i % len(self.in_ds)
             _print = True
             self.train_iteration(self.model, self.in_ds[ind], self.out_ds[ind], self.loss, self.optimizer, _print=_print)
@@ -101,10 +108,12 @@ class TransformerTrainer:
         loss.backward()
         optimizer.step()
 
-        print(y_pred.shape)
         y_pred_arg = torch.argmax(y_pred, dim=2)
 
-        print(f'y: {y} pred: {y_pred_arg}')
+        if _print:
+
+            print(f'x: {x} y: {y} y_pred: {y_pred_arg}')
+            print(f'pred: {y_pred}')
 
         if _print:
             print(loss.item())

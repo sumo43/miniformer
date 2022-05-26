@@ -1,3 +1,11 @@
+"""
+
+Sanity check for debugging purposes
+i will add more stuff once it converges properly
+
+
+"""
+
 from torch.nn import Module
 import torch
 import numpy as np
@@ -172,7 +180,7 @@ class TransformerDecoder(Module):
 
         return x
 
-class Transformer(Module):
+class SimpleFormer(Module):
 
     def __init__(self, mp):
 
@@ -182,14 +190,19 @@ class Transformer(Module):
         self.en_vocab_size = mp.en_vocab_size
         self.es_vocab_size = mp.es_vocab_size
         self.d_model = mp.d_model
+        self.d_ff = mp.d_ff
+
+        print(self.d_ff)
 
         self.input_embedding = TransformerEmbedding(self.mp, self.en_vocab_size)
         self.output_embedding = TransformerEmbedding(self.mp, self.es_vocab_size)
         self.pos_encoding = PositionalEncoder(self.mp)
-        self.encoder = TransformerEncoder(self.mp)
-        self.decoder = TransformerDecoder(self.mp)
+        #self.encoder = TransformerEncoder(self.mp)
+        #self.decoder = TransformerDecoder(self.mp)
+
         self.head = nn.Sequential(
-            TransformerFC(mp),
+            torch.nn.Linear(self.d_model, self.d_model),
+            torch.nn.Linear(self.d_model, self.d_model),
             torch.nn.Linear(self.d_model, self.es_vocab_size),
             torch.nn.Softmax(dim=-1)
         ) 
@@ -200,18 +213,21 @@ class Transformer(Module):
         assert len(_input.shape) == 1
         assert len(_output.shape) == 1
 
+
         _input = _input.unsqueeze(0)
         _output = _output.unsqueeze(0)
 
         _input = self.input_embedding(_input)
         _output = self.output_embedding(_output)
 
-        #_input = self.pos_encoding(_input)
+        _input = self.pos_encoding(_input)
         #_output = self.pos_encoding(_output)
 
-        encoder_output = self.encoder(_input)
+        return self.head(_input)
 
-        _output = self.decoder((_output, torch.zeros(_input.shape)))
-        _output = self.head(encoder_output)
+        #encoder_output = self.encoder(_input)
+
+        #_output = self.decoder((_output, torch.zeros(_input.shape)))
+        #_output = self.head(encoder_output)
 
         return _output

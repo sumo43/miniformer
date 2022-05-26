@@ -2,6 +2,7 @@ from utils.general import ModelParams, TransformerTrainer
 from utils.data import load_data
 from utils.preproc import preprocess_data, postprocess_data, to_string
 from model.transformer import Transformer
+from model.simpleformer import SimpleFormer
 
 """
 
@@ -39,7 +40,8 @@ in_ds, out_ds, eng_vocab, sp_vocab = preprocess_data(mp, inputs, outputs, test=T
 data = (in_ds, out_ds, eng_vocab, sp_vocab)
 
 
-t = Transformer(mp)
+t = SimpleFormer(mp)
+#t = Transformer(mp)
 tr = TransformerTrainer(mp, t, data)
 tr.train()
 

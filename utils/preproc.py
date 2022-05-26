@@ -25,8 +25,8 @@ def pad_sentences(mp, ds, tokenizer, voc):
 
 def preprocess_data(mp, train, val, test=False):
     if test:
-        train = train[:10]
-        val = val[:10]
+        train = train[10000:11000]
+        val = val[10000:11000]
 
     en_tokenizer = get_tokenizer('moses', language='en')    
     train_iter = iter(train)
