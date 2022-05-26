@@ -205,11 +205,14 @@ class Transformer(Module):
         _input = self.input_embedding(_input)
         _output = self.output_embedding(_output)
 
-        _input = self.pos_encoding(_input)
-        _output = self.pos_encoding(_output)
+        #_input = self.pos_encoding(_input)
+        #_output = self.pos_encoding(_output)
+
+        print(_input.shape)
+        print(_output.shape)
 
         encoder_output = self.encoder(_input)
 
-        _output = self.decoder((_output, encoder_output))
+        _output = self.decoder((_output, torch.zeros(_input.shape)))
 
         return _output

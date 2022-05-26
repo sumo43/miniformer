@@ -18,10 +18,10 @@ d_model = 128
 h=4
 n_encoders=4
 n_decoders=4
-d_ff=512
+d_ff=256
 # max length for both input and output, including <s> </s> 
 # we pad it up to this length
-max_seq_length=128
+max_seq_length=12
 batch_size = 32
 
 mp = ModelParams(d_model=d_model, 
@@ -43,6 +43,6 @@ t = Transformer(mp)
 tr = TransformerTrainer(mp, t, data)
 tr.train()
 
-ev = TransformerEvaluator(mp, t, data)
+#ev = TransformerEvaluator(mp, t, data)
 
-tr.eval()
+#tr.eval()

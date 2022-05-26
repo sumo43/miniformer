@@ -21,7 +21,7 @@ class PositionalEncoder(nn.Module):
                     self.encoding_tensor[pos, i] = math.cos(pos / (math.pow(10000, ((2 * i / self.d_model)))))
     
     def forward(self, x):
-        assert x.shape[1] == self.d_model
+        assert x.shape[-1] == self.d_model
 
         x = x + self.encoding_tensor[:x.shape[0], :]
 
@@ -86,7 +86,7 @@ class TransformerTrainer:
         self.loss = torch.nn.CrossEntropyLoss()
     
     def train(self):
-        for i in range(100):
+        for i in range(1000):
             ind = i % len(self.in_ds)
             _print = True
             self.train_iteration(self.model, self.in_ds[ind], self.out_ds[ind], self.loss, self.optimizer, _print=_print)
@@ -100,6 +100,11 @@ class TransformerTrainer:
         loss = loss_fn(y_pred[0], y)
         loss.backward()
         optimizer.step()
+
+        print(y_pred.shape)
+        y_pred_arg = torch.argmax(y_pred, dim=2)
+
+        print(f'y: {y} pred: {y_pred_arg}')
 
         if _print:
             print(loss.item())
@@ -119,9 +124,7 @@ class TransformerEvaluator:
         # eval until </s> token or reach max seq length
 
         for i in range(1, 10000): 
-            
             self.eval_iteration(self.model, self.in_ds[ind], self.out_ds[ind], self.loss, self.optimizer)
-
 
     def eval_iteration(self, model, x, y, loss_fn, optimizer):
 
