@@ -32,10 +32,14 @@ class TransformerFC(Module):
 
         self.fc1 = torch.nn.Linear(self.d_model, self.d_ff)
         self.fc2 = torch.nn.Linear(self.d_ff, self.d_model)
+        self.relu = torch.nn.ReLU()
 
     def forward(self, x):
         x = self.fc1(x)
+        x = self.relu(x) 
         x = self.fc2(x)
+        x = self.relu(x)
+
         return x
 
 class AddNorm(Module):
@@ -192,17 +196,14 @@ class SimpleFormer(Module):
         self.d_model = mp.d_model
         self.d_ff = mp.d_ff
 
-        print(self.d_ff)
-
         self.input_embedding = TransformerEmbedding(self.mp, self.en_vocab_size)
         self.output_embedding = TransformerEmbedding(self.mp, self.es_vocab_size)
         self.pos_encoding = PositionalEncoder(self.mp)
-        #self.encoder = TransformerEncoder(self.mp)
-        #self.decoder = TransformerDecoder(self.mp)
+        self.encoder = TransformerEncoder(self.mp)
+        self.decoder = TransformerDecoder(self.mp)
 
         self.head = nn.Sequential(
-            torch.nn.Linear(self.d_model, self.d_model),
-            torch.nn.Linear(self.d_model, self.d_model),
+            TransformerFC(self.mp),
             torch.nn.Linear(self.d_model, self.es_vocab_size),
             torch.nn.Softmax(dim=-1)
         ) 
@@ -213,7 +214,6 @@ class SimpleFormer(Module):
         assert len(_input.shape) == 1
         assert len(_output.shape) == 1
 
-
         _input = _input.unsqueeze(0)
         _output = _output.unsqueeze(0)
 
@@ -221,13 +221,11 @@ class SimpleFormer(Module):
         _output = self.output_embedding(_output)
 
         _input = self.pos_encoding(_input)
-        #_output = self.pos_encoding(_output)
+        _output = self.pos_encoding(_output)
 
-        return self.head(_input)
+        encoder_output = self.encoder(_input)
 
-        #encoder_output = self.encoder(_input)
-
-        #_output = self.decoder((_output, torch.zeros(_input.shape)))
-        #_output = self.head(encoder_output)
+        _output = self.decoder((_output, torch.zeros(_input.shape)))
+        _output = self.head(encoder_output)
 
         return _output

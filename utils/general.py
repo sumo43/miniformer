@@ -25,10 +25,6 @@ class PositionalEncoder(nn.Module):
     def forward(self, x):
         assert x.shape[-1] == self.d_model
 
-        print('encoding tensor')
-
-        print(self.encoding_tensor[0])
-
         x = x + self.encoding_tensor[:x.shape[0], :]
 
         return x
@@ -95,7 +91,10 @@ class TransformerTrainer:
     def train(self):
         for i in range(100000):
             ind = i % len(self.in_ds)
-            _print = True
+            if i % 100 == 0:
+                _print = True
+            else:
+                _print = False
             self.train_iteration(self.model, self.in_ds[ind], self.out_ds[ind], self.loss, self.optimizer, _print=_print)
 
     def train_iteration(self, model, x, y, loss_fn, optimizer, _print=False):
@@ -113,7 +112,6 @@ class TransformerTrainer:
         if _print:
 
             print(f'x: {x} y: {y} y_pred: {y_pred_arg}')
-            print(f'pred: {y_pred}')
 
         if _print:
             print(loss.item())
