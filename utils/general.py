@@ -3,6 +3,7 @@ import torch
 import math
 from time import sleep
 from random import shuffle
+from tqdm import tqdm
 
 VERY_SMOL_NUM = -33209582095375352525228572587289578295.
 
@@ -100,11 +101,11 @@ class TransformerTrainer:
         self.es_vocab_size = mp.es_vocab_size
 
     def train(self):
-        for i in range(len(self.in_ds)):
+        for i in tqdm(range(len(self.in_ds))):
 
             ind = i % len(self.in_ds)
 
-            if i % 100 == 0:
+            if i % 1000 == 0:
                 _print = True
             else:
                 _print = False
@@ -122,6 +123,9 @@ class TransformerTrainer:
             y_pred_old = y_pred
 
         y_pred = y_pred[:, 1:, :]
+        print(y_pred.shape)
+        print(y.shape)
+        print(x.shape)
 
         optimizer.zero_grad()
 
