@@ -43,6 +43,7 @@ data = (in_ds, out_ds, eng_vocab, sp_vocab)
 #t = SimpleFormer(mp)
 t = Transformer(mp)
 tr = TransformerTrainer(mp, t, data)
+
 #epochs
 for i in range(5):
     tr.train()

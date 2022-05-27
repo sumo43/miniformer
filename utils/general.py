@@ -101,6 +101,7 @@ class TransformerTrainer:
         self.es_vocab_size = mp.es_vocab_size
 
     def train(self):
+
         for i in tqdm(range(len(self.in_ds))):
 
             ind = i % len(self.in_ds)
@@ -109,7 +110,11 @@ class TransformerTrainer:
                 _print = True
             else:
                 _print = False
-            self.train_iteration(self.model, self.in_ds[ind], self.out_ds[ind], self.loss, self.optimizer, _print=_print)
+
+            try:
+                self.train_iteration(self.model, self.in_ds[ind], self.out_ds[ind], self.loss, self.optimizer, _print=_print)
+            except Exception as e:
+                continue
 
     def train_iteration(self, model, x, y, loss_fn, optimizer, _print=False):
         # shift right 
@@ -123,9 +128,6 @@ class TransformerTrainer:
             y_pred_old = y_pred
 
         y_pred = y_pred[:, 1:, :]
-        print(y_pred.shape)
-        print(y.shape)
-        print(x.shape)
 
         optimizer.zero_grad()
 
