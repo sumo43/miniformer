@@ -1,3 +1,11 @@
+"""
+
+Sanity check for debugging purposes
+i will add more stuff once it converges properly
+
+
+"""
+
 from torch.nn import Module
 import torch
 import numpy as np
@@ -24,10 +32,14 @@ class TransformerFC(Module):
 
         self.fc1 = torch.nn.Linear(self.d_model, self.d_ff)
         self.fc2 = torch.nn.Linear(self.d_ff, self.d_model)
+        self.relu = torch.nn.ReLU()
 
     def forward(self, x):
         x = self.fc1(x)
+        x = self.relu(x) 
         x = self.fc2(x)
+        x = self.relu(x)
+
         return x
 
 class AddNorm(Module):
@@ -125,8 +137,8 @@ class DecoderBlock(Module):
         x = self.mha_2(*self.expand(x))
         x = self.add_norm(x_prev, x)
         x_prev = x
-        V = x
-        x = self.mha_2(*self.expand_QK(x_e), V)
+        Q = x
+        x = self.mha_2(*self.expand_VK(x_e), Q)
         x = self.add_norm(x_prev, x)
         x_prev = x
         x = self.ff(x)
@@ -136,19 +148,19 @@ class DecoderBlock(Module):
 
         return (x, x_e)
     
-    def expand_QK(self, x):
+    def expand_VK(self, x):
 
-        Q = x.clone()
+        V = x.clone()
         K = x.clone()
 
-        return (Q, K)
+        return (V, K)
     
     def expand(self, x):
         Q = x.clone()
         K = x.clone()
         V = x.clone()
 
-        return (Q, K, V)
+        return (V, K, Q)
 
 class TransformerDecoder(Module):
     def __init__(self, mp):
@@ -182,14 +194,16 @@ class Transformer(Module):
         self.en_vocab_size = mp.en_vocab_size
         self.es_vocab_size = mp.es_vocab_size
         self.d_model = mp.d_model
+        self.d_ff = mp.d_ff
 
         self.input_embedding = TransformerEmbedding(self.mp, self.en_vocab_size)
         self.output_embedding = TransformerEmbedding(self.mp, self.es_vocab_size)
         self.pos_encoding = PositionalEncoder(self.mp)
         self.encoder = TransformerEncoder(self.mp)
         self.decoder = TransformerDecoder(self.mp)
+
         self.head = nn.Sequential(
-            TransformerFC(mp),
+            TransformerFC(self.mp),
             torch.nn.Linear(self.d_model, self.es_vocab_size),
             torch.nn.Softmax(dim=-1)
         ) 
@@ -206,12 +220,12 @@ class Transformer(Module):
         _input = self.input_embedding(_input)
         _output = self.output_embedding(_output)
 
-        #_input = self.pos_encoding(_input)
-        #_output = self.pos_encoding(_output)
+        _input = self.pos_encoding(_input)
+        _output = self.pos_encoding(_output)
 
         encoder_output = self.encoder(_input)
 
-        _output = self.decoder((_output, torch.zeros(_input.shape)))
+        _output = self.decoder((_input, encoder_output))
         _output = self.head(encoder_output)
 
         return _output

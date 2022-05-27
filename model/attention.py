@@ -29,6 +29,7 @@ class SDPAttention(Module):
         x = self.mask(x)
         # no mask
         x = self.softmax(x)
+
         x = torch.matmul(x, V)
 
         assert x.shape[-1] == self.d_k
@@ -39,7 +40,7 @@ class SDPAttention(Module):
         return mat / torch.sqrt(torch.tensor(self.d_k))
     
     def mask(self, x):
-        tri_mask = torch.triu(torch.ones(size=x.shape, dtype=torch.float)) * VERY_SMOL_NUM
+        tri_mask = torch.triu(torch.ones(size=x.shape, dtype=torch.float), 1) * VERY_SMOL_NUM
         x = x + tri_mask
         return x 
 
@@ -66,7 +67,7 @@ class MultiHeadAttention(Module):
 
         self.SDPA = SDPAttention(mp, masked)
 
-    def forward(self, Q, K, V):
+    def forward(self, V, K, Q):
 
         assert Q.shape[-1] == self.d_model
         assert K.shape[-1] == self.d_model

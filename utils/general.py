@@ -99,11 +99,15 @@ class TransformerTrainer:
 
     def train_iteration(self, model, x, y, loss_fn, optimizer, _print=False):
 
+        # shift right 
+
+        y = y[1:]
+
         y_pred = model(x, y)
 
         optimizer.zero_grad()
 
-        loss = loss_fn(y_pred[0], y)
+        loss = loss_fn(y_pred[0][:-1], y)
         loss.backward()
         optimizer.step()
 

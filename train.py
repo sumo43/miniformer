@@ -16,9 +16,9 @@ so I'm hoping to train the model to be an okay-ish english to spanish translator
 """
 
 d_model = 128
-h=4
-n_encoders=4
-n_decoders=4
+h=1
+n_encoders=1
+n_decoders=1
 d_ff=256
 # max length for both input and output, including <s> </s> 
 # we pad it up to this length
@@ -40,8 +40,8 @@ in_ds, out_ds, eng_vocab, sp_vocab = preprocess_data(mp, inputs, outputs, test=T
 data = (in_ds, out_ds, eng_vocab, sp_vocab)
 
 
-t = SimpleFormer(mp)
-#t = Transformer(mp)
+#t = SimpleFormer(mp)
+t = Transformer(mp)
 tr = TransformerTrainer(mp, t, data)
 tr.train()
 
