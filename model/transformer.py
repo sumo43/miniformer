@@ -211,11 +211,8 @@ class Transformer(Module):
     def forward(self, _input, _output):
 
         # the input is a 1-d token vector
-        assert len(_input.shape) == 1
-        assert len(_output.shape) == 1
-
-        _input = _input.unsqueeze(0)
-        _output = _output.unsqueeze(0)
+        assert len(_input.shape) == 2
+        assert len(_output.shape) == 2
 
         _input = self.input_embedding(_input)
         _output = self.output_embedding(_output)

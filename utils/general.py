@@ -21,11 +21,13 @@ class PositionalEncoder(nn.Module):
                     self.encoding_tensor[pos, i] = math.sin(pos / (math.pow(10000, ((2 * i / self.d_model)))))
                 else:
                     self.encoding_tensor[pos, i] = math.cos(pos / (math.pow(10000, ((2 * i / self.d_model)))))
+        
+        self.encoding_tensor = self.encoding_tensor.unsqueeze(0)
     
     def forward(self, x):
         assert x.shape[-1] == self.d_model
 
-        x = x + self.encoding_tensor[:x.shape[0], :]
+        x = x + self.encoding_tensor[:, :x.shape[1], :]
 
         return x
 
@@ -87,10 +89,14 @@ class TransformerTrainer:
 
         self.optimizer = torch.optim.Adam(model.parameters(), betas=(self.beta_1, self.beta_2))
         self.loss = torch.nn.CrossEntropyLoss()
+
+        self.es_vocab_size = mp.es_vocab_size
     
     def train(self):
         for i in range(100000):
+
             ind = i % len(self.in_ds)
+
             if i % 100 == 0:
                 _print = True
             else:
@@ -99,19 +105,28 @@ class TransformerTrainer:
 
     def train_iteration(self, model, x, y, loss_fn, optimizer, _print=False):
 
+
         # shift right 
 
-        y = y[1:]
+        y = y[:, :-1]
 
         y_pred = model(x, y)
 
+        y_pred = y_pred[:, :-1, :]
+
+
         optimizer.zero_grad()
 
-        loss = loss_fn(y_pred[0][:-1], y)
+        batch_size, seq_len, vocab_size = y_pred.shape
+
+        y_pred = y_pred.ravel().view(-1, vocab_size)
+        y = y.ravel().view(-1)
+
+        loss = loss_fn(y_pred, y)
         loss.backward()
         optimizer.step()
 
-        y_pred_arg = torch.argmax(y_pred, dim=2)
+        y_pred_arg = torch.argmax(y_pred, dim=1)
 
         if _print:
 
@@ -125,7 +140,6 @@ class TransformerEvaluator:
     def __init__(self, mp, model, data):
 
         # greedy search
-    
         self.mp = mp
         self.model = model
         _, _, self.eng_vocab, self.sp_vocab = data

@@ -25,8 +25,8 @@ def pad_sentences(mp, ds, tokenizer, voc):
 
 def preprocess_data(mp, train, val, test=False):
     if test:
-        train = train[10000:11000]
-        val = val[10000:11000]
+        train = train[5000:10000]
+        val = val[5000:10000]
 
     en_tokenizer = get_tokenizer('moses', language='en')    
     train_iter = iter(train)
@@ -37,12 +37,22 @@ def preprocess_data(mp, train, val, test=False):
 
     in_ds = []
 
-    for i in train:
+    curr_batch = []
+
+    for it, i in enumerate(train):
+
         e = en_tokenizer(i)
         e = ['<bos>', *e, '<eos>']
         num_pad_tokens = mp.max_seq_length - len(e)
         [e.append('<pad>') for i in range(num_pad_tokens)] 
-        in_ds.append(torch.tensor([en_vocab[a] for a in e]))
+        curr_batch.append(torch.tensor([en_vocab[a] for a in e]).unsqueeze(0))
+
+        if it != 0 and it % 32 == 0:
+            curr_batch = torch.cat(curr_batch)
+            in_ds.append(curr_batch)
+            curr_batch = []
+
+    curr_batch = [] 
 
     es_tokenizer = get_tokenizer('moses', language='es')
     val_iter = iter(val)
@@ -50,13 +60,18 @@ def preprocess_data(mp, train, val, test=False):
 
     out_ds = []
     
-    for i in val:
+    for it, i in enumerate(val):
         e = es_tokenizer(i)
         e = ['<bos>', *e, '<eos>']
         num_pad_tokens = mp.max_seq_length - len(e)
         [e.append('<pad>') for i in range(num_pad_tokens)]
-        out_ds.append(torch.tensor([es_vocab[a] for a in e]))
+        curr_batch.append(torch.tensor([es_vocab[a] for a in e]).unsqueeze(0))
 
+        if it != 0 and it % 32 == 0:
+            curr_batch = torch.cat(curr_batch)
+            out_ds.append(curr_batch)
+            curr_batch = []
+    
     mp.set_en_vocab_size(len(en_vocab))
     mp.set_es_vocab_size(len(es_vocab))
 
