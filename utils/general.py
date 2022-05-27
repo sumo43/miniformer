@@ -110,7 +110,13 @@ class TransformerTrainer:
 
         y = y[:, :-1]
 
+        
+
         y_pred = model(x, y)
+
+        if _print:
+            y_old = y
+            y_pred_old = y_pred
 
         y_pred = y_pred[:, :-1, :]
 
@@ -126,11 +132,10 @@ class TransformerTrainer:
         loss.backward()
         optimizer.step()
 
-        y_pred_arg = torch.argmax(y_pred, dim=1)
-
+        
         if _print:
-
-            print(f'x: {x} y: {y} y_pred: {y_pred_arg}')
+            y_pred_arg = torch.argmax(y_pred_old, dim=2)
+            print(f'x: {x[0]} y: {y_old[0]} y_pred: {y_pred_arg[0]}')
 
         if _print:
             print(loss.item())
