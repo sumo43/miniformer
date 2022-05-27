@@ -1,8 +1,8 @@
 from torch import nn
 import torch
 import math
-
 from time import sleep
+from random import shuffle
 
 VERY_SMOL_NUM = -33209582095375352525228572587289578295.
 
@@ -87,13 +87,20 @@ class TransformerTrainer:
         self.model = model
         self.in_ds, self.out_ds, self.eng_vocab, self.sp_vocab = data
 
+        print('shuffling...')
+
+        shuffle(self.in_ds)
+        shuffle(self.out_ds)
+
+        print('done shuffling')
+
         self.optimizer = torch.optim.Adam(model.parameters(), betas=(self.beta_1, self.beta_2))
         self.loss = torch.nn.CrossEntropyLoss()
 
         self.es_vocab_size = mp.es_vocab_size
 
     def train(self):
-        for i in range(len(self.train_ds)):
+        for i in range(len(self.in_ds)):
 
             ind = i % len(self.in_ds)
 
