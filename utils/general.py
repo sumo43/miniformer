@@ -91,9 +91,9 @@ class TransformerTrainer:
         self.loss = torch.nn.CrossEntropyLoss()
 
         self.es_vocab_size = mp.es_vocab_size
-    
+
     def train(self):
-        for i in range(100000):
+        for i in range(len(self.train_ds)):
 
             ind = i % len(self.in_ds)
 
@@ -104,13 +104,9 @@ class TransformerTrainer:
             self.train_iteration(self.model, self.in_ds[ind], self.out_ds[ind], self.loss, self.optimizer, _print=_print)
 
     def train_iteration(self, model, x, y, loss_fn, optimizer, _print=False):
-
-
         # shift right 
 
         y = y[:, :-1]
-
-        
 
         y_pred = model(x, y)
 
@@ -118,8 +114,7 @@ class TransformerTrainer:
             y_old = y
             y_pred_old = y_pred
 
-        y_pred = y_pred[:, :-1, :]
-
+        y_pred = y_pred[:, 1:, :]
 
         optimizer.zero_grad()
 
@@ -132,7 +127,6 @@ class TransformerTrainer:
         loss.backward()
         optimizer.step()
 
-        
         if _print:
             y_pred_arg = torch.argmax(y_pred_old, dim=2)
             print(f'x: {x[0]} y: {y_old[0]} y_pred: {y_pred_arg[0]}')
