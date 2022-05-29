@@ -106,7 +106,7 @@ class TransformerTrainer:
 
             ind = i % len(self.in_ds)
 
-            if i % 1000 == 0:
+            if i % 100 == 0:
                 _print = True
             else:
                 _print = False
@@ -115,7 +115,7 @@ class TransformerTrainer:
                 self.train_iteration(self.model, self.in_ds[ind], self.out_ds[ind], self.loss, self.optimizer, _print=_print)
             except Exception as e:
                 continue
-
+        
     def train_iteration(self, model, x, y, loss_fn, optimizer, _print=False):
         # shift right 
 

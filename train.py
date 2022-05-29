@@ -2,7 +2,6 @@ from utils.general import ModelParams, TransformerTrainer
 from utils.data import load_data
 from utils.preproc import preprocess_data, postprocess_data, to_string
 from model.transformer import Transformer
-from model.simpleformer import SimpleFormer
 
 """
 
@@ -23,7 +22,8 @@ d_ff=64
 # max length for both input and output, including <s> </s> 
 # we pad it up to this length
 max_seq_length=128
-batch_size = 32
+batch_size = 4
+NUM_BATCHES = 1
 
 mp = ModelParams(d_model=d_model, 
     h=h, 
@@ -45,7 +45,7 @@ t = Transformer(mp)
 tr = TransformerTrainer(mp, t, data)
 
 #epochs
-for i in range(5):
+for i in range(NUM_BATCHES):
     tr.train()
 
 #ev = TransformerEvaluator(mp, t, data)
