@@ -14,16 +14,16 @@ so I'm hoping to train the model to be an okay-ish english to spanish translator
 
 """
 
-d_model = 32
-h= 1
-n_encoders=1
-n_decoders=1
-d_ff=64
+d_model = 128
+h= 4
+n_encoders=4
+n_decoders=4
+d_ff= 256
 # max length for both input and output, including <s> </s> 
 # we pad it up to this length
-max_seq_length=128
-batch_size = 4
-NUM_BATCHES = 1
+max_seq_length = 128
+batch_size = 32
+NUM_BATCHES = 20
 
 mp = ModelParams(d_model=d_model, 
     h=h, 
@@ -46,6 +46,7 @@ tr = TransformerTrainer(mp, t, data)
 
 #epochs
 for i in range(NUM_BATCHES):
+    print(f'epoch {i}')
     tr.train()
 
 #ev = TransformerEvaluator(mp, t, data)

@@ -81,10 +81,11 @@ class TransformerEncoder(Module):
         self.mp = mp
         self.d_model = mp.d_model
         self.h = mp.h
+        self.n_encoders = mp.n_encoders
 
         self.encoder = nn.Sequential(
-            *[EncoderBlock(self.mp) for i in range(self.h)])
-
+            *[EncoderBlock(self.mp) for i in range(self.n_encoders)])
+        
     def forward(self, x):
         return self.encoder(x)
 
@@ -93,7 +94,7 @@ class TransformerEmbedding(Module):
         super().__init__()
 
         self.d_model = mp.d_model 
-        self.embedding = torch.nn.Embedding(size, self.d_model, padding_idx=2)
+        self.embedding = torch.nn.Embedding(size, self.d_model, padding_idx=1)
 
     def forward(self, x):
 
@@ -160,9 +161,10 @@ class TransformerDecoder(Module):
         self.h = mp.h
         self.d_model = mp.d_model
         self.es_vocab_size = mp.es_vocab_size
+        self.n_decoders = mp.n_decoders
 
         self.decoder = nn.Sequential(
-            *[DecoderBlock(self.mp) for i in range(self.h)])
+            *[DecoderBlock(self.mp) for i in range(self.n_decoders)])
         
         
     def forward(self, x):
@@ -191,11 +193,11 @@ class Transformer(Module):
         self.encoder = TransformerEncoder(self.mp)
         self.decoder = TransformerDecoder(self.mp)
 
+        # dont need softmax because were using crossentropy loss (includes it)
         self.head = nn.Sequential(
             TransformerFC(self.mp),
-            torch.nn.Linear(self.d_model, self.es_vocab_size),
-            torch.nn.Softmax(dim=-1)
-        ) 
+            torch.nn.Linear(self.d_model, self.es_vocab_size)
+        )  
     
     def forward(self, _input, _output):
 
@@ -211,7 +213,8 @@ class Transformer(Module):
 
         encoder_output = self.encoder(_input)
 
-        _output = self.decoder((_input, encoder_output))
-        _output = self.head(encoder_output)
+        _output, _encoder_output = self.decoder((_input, encoder_output))
+
+        _output = self.head(_output)
 
         return _output

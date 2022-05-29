@@ -86,6 +86,7 @@ class TransformerTrainer:
         self.train_steps = mp.train_steps or 5000
 
         self.model = model
+        self.d_model = mp.d_model
         self.in_ds, self.out_ds, self.eng_vocab, self.sp_vocab = data
 
         print('shuffling...')
@@ -112,11 +113,13 @@ class TransformerTrainer:
                 _print = False
 
             try:
-                self.train_iteration(self.model, self.in_ds[ind], self.out_ds[ind], self.loss, self.optimizer, _print=_print)
+                self.train_iteration(self.model, self.in_ds[ind], self.out_ds[ind], self.loss, self.optimizer, _print=_print, i=i)
             except Exception as e:
+
+                print(e)
                 continue
         
-    def train_iteration(self, model, x, y, loss_fn, optimizer, _print=False):
+    def train_iteration(self, model, x, y, loss_fn, optimizer, _print=False, i=0):
         # shift right 
 
         y = y[:, :-1]
@@ -129,6 +132,10 @@ class TransformerTrainer:
 
         y_pred = y_pred[:, 1:, :]
 
+        lr = math.pow(float(self.d_model), -0.5) * math.pow(float(i), -0.5)
+
+        #for g in optimizer.param_groups:
+        #    g['lr'] = lr
         optimizer.zero_grad()
 
         batch_size, seq_len, vocab_size = y_pred.shape
