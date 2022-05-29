@@ -1,11 +1,3 @@
-"""
-
-Sanity check for debugging purposes
-i will add more stuff once it converges properly
-
-
-"""
-
 from torch.nn import Module
 import torch
 import numpy as np
@@ -18,10 +10,9 @@ from model.attention import MultiHeadAttention
 from utils.general import PositionalEncoder
 
 """
-TransformerBlock:
-TransformerEmbedding -> TransformerEncoder, which is just a list of EncoderBlock
 
-TODO change the linear layers to "expand"
+The code for transformer. Find attention mechanism in attention.py
+
 """
 
 class TransformerFC(Module):
@@ -38,7 +29,6 @@ class TransformerFC(Module):
         x = self.fc1(x)
         x = self.relu(x) 
         x = self.fc2(x)
-        x = self.relu(x)
 
         return x
 
@@ -75,7 +65,6 @@ class EncoderBlock(Module):
         x = self.ff(x)
         x = self.add_norm(x_prev, x)
         
-        assert x.shape[-1] == self.d_model
         return x
     
     def expand(self, x):
