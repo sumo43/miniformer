@@ -7,13 +7,11 @@ I am using a much smaller version of transformer described in the paper, the exa
 I will upload the weights when it's done training
 
 TODO
-- Implement batching
-- good pprint
-- wandb
-- finally train???1
+- Solve convergence issues. Try training with a smaller model to partial convergence
 
 DEBUGGING POOR CONVERGENCE
 
 - Not masking
 - Not encoder...
 - Not positional
+- Not FF (fixed)
