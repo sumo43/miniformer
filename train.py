@@ -41,7 +41,7 @@ data = (in_ds, out_ds, eng_vocab, sp_vocab)
 
 
 #t = SimpleFormer(mp)
-t = Transformer(mp).to('cuda:0')
+t = Transformer(mp).to('cuda')
 tr = TransformerTrainer(mp, t, data)
 
 #epochs

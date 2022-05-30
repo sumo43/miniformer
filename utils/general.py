@@ -122,6 +122,8 @@ class TransformerTrainer:
     def train_iteration(self, model, x, y, loss_fn, optimizer, _print=False, i=0):
         # shift right 
 
+        optimizer = optimizer.cuda()
+
         y = y[:, :-1]
 
         y_pred = model(x, y)
