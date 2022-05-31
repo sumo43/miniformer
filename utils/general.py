@@ -13,6 +13,7 @@ class PositionalEncoder(nn.Module):
 
         self.d_model = mp.d_model
         self.max_seq_length = mp.max_seq_length
+        self.device = mp.device
 
         # we make the max sequence length 128
         self.encoding_tensor = torch.zeros((self.max_seq_length, self.d_model), requires_grad=False)
@@ -23,7 +24,7 @@ class PositionalEncoder(nn.Module):
                 else:
                     self.encoding_tensor[pos, i] = math.cos(pos / (math.pow(10000, ((2 * i / self.d_model)))))
         
-        self.encoding_tensor = self.encoding_tensor.unsqueeze(0)
+        self.encoding_tensor = self.encoding_tensor.unsqueeze(0).to(self.device)
     
     def forward(self, x):
         assert x.shape[-1] == self.d_model
@@ -56,6 +57,7 @@ class ModelParams():
 
         # d_k = d_v = d_model / h
         self.d_v = self.d_k = d_model // h
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
         self.dropout = 0.1
         self.adam_params = {
@@ -111,33 +113,31 @@ class TransformerTrainer:
                 _print = True
             else:
                 _print = False
-
+            
             try:
                 self.train_iteration(self.model, self.in_ds[ind], self.out_ds[ind], self.loss, self.optimizer, _print=_print, i=i)
-            except Exception as e:
 
+            except Exception as e:
                 print(e)
                 continue
         
     def train_iteration(self, model, x, y, loss_fn, optimizer, _print=False, i=0):
-        # shift right 
 
-        optimizer = optimizer.cuda()
-
-        y = y[:, :-1]
-
-        y_pred = model(x, y)
+        # feed the outputs shifted right, but we later compute loss w/ non-shifted
+        y_pred = model(x, y[-1:])
 
         if _print:
             y_old = y
             y_pred_old = y_pred
 
-        y_pred = y_pred[:, 1:, :]
+        y = y[:, 1:]
+        y_pred = y_pred[:, :-1]
 
-        lr = math.pow(float(self.d_model), -0.5) * math.pow(float(i), -0.5)
+        if i > 0:
+            lr = math.pow(float(self.d_model), -0.5) * math.pow(float(i), -0.5)
 
-        #for g in optimizer.param_groups:
-        #    g['lr'] = lr
+            for g in optimizer.param_groups:
+                g['lr'] = lr
         optimizer.zero_grad()
 
         batch_size, seq_len, vocab_size = y_pred.shape
@@ -151,7 +151,6 @@ class TransformerTrainer:
 
         if _print:
             y_pred_arg = torch.argmax(y_pred_old, dim=2)
-            print(f'x: {x[0]} y: {y_old[0]} y_pred: {y_pred_arg[0]}')
 
         if _print:
             print(loss.item())
@@ -182,6 +181,3 @@ class TransformerEvaluator:
         optimizer.step()
 
         print(loss.item())
-
-
-    

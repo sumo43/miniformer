@@ -82,9 +82,10 @@ class TransformerEncoder(Module):
         self.d_model = mp.d_model
         self.h = mp.h
         self.n_encoders = mp.n_encoders
+        self.device = mp.device
 
         self.encoder = nn.Sequential(
-            *[EncoderBlock(self.mp) for i in range(self.n_encoders)])
+            *[EncoderBlock(self.mp).to(self.device) for i in range(self.n_encoders)])
         
     def forward(self, x):
         return self.encoder(x)
@@ -192,6 +193,7 @@ class Transformer(Module):
         self.pos_encoding = PositionalEncoder(self.mp)
         self.encoder = TransformerEncoder(self.mp)
         self.decoder = TransformerDecoder(self.mp)
+        self.device = mp.device
 
         # dont need softmax because were using crossentropy loss (includes it)
         self.head = nn.Sequential(
@@ -213,7 +215,7 @@ class Transformer(Module):
 
         encoder_output = self.encoder(_input)
 
-        _output, _encoder_output = self.decoder((_input, encoder_output))
+        _output, _encoder_output = self.decoder((_output, encoder_output))
 
         _output = self.head(_output)
 

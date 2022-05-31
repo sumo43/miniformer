@@ -13,6 +13,7 @@ class SDPAttention(Module):
         self.d_k = mp.d_k
 
         self.softmax = torch.nn.Softmax(dim=1)
+        self.device = mp.device
 
     def forward(self, Q, K, V):
 
@@ -40,7 +41,7 @@ class SDPAttention(Module):
         return mat / torch.sqrt(torch.tensor(self.d_k))
     
     def mask(self, x):
-        tri_mask = torch.triu(torch.ones(size=x.shape, dtype=torch.float), 1) * VERY_SMOL_NUM
+        tri_mask = torch.triu(torch.ones(size=x.shape, dtype=torch.float), 1).to(self.device) * VERY_SMOL_NUM
         x = x + tri_mask
         return x 
 
@@ -58,12 +59,13 @@ class MultiHeadAttention(Module):
         self.d_v = mp.d_v
         self.d_k = mp.d_k
         self.h = mp.h
+        self.device = mp.device
 
         # TODO make these each 2 weight
-        self.w_Q = [torch.nn.Linear(self.d_model, self.d_k) for i in range(self.h)]
-        self.w_K = [torch.nn.Linear(self.d_model, self.d_k) for i in range(self.h)]
-        self.w_V = [torch.nn.Linear(self.d_model, self.d_v) for i in range(self.h)]
-        self.w_O = torch.nn.Linear(self.d_model, self.d_k * self.h)
+        self.w_Q = [torch.nn.Linear(self.d_model, self.d_k).to(self.device) for i in range(self.h)]
+        self.w_K = [torch.nn.Linear(self.d_model, self.d_k).to(self.device) for i in range(self.h)]
+        self.w_V = [torch.nn.Linear(self.d_model, self.d_v).to(self.device) for i in range(self.h)]
+        self.w_O = torch.nn.Linear(self.d_model, self.d_k * self.h).to(self.device)
 
         self.SDPA = SDPAttention(mp, masked)
 

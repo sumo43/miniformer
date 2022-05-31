@@ -39,9 +39,10 @@ in_ds, out_ds, eng_vocab, sp_vocab = preprocess_data(mp, inputs, outputs, test=T
 
 data = (in_ds, out_ds, eng_vocab, sp_vocab)
 
+device = mp.device
 
 #t = SimpleFormer(mp)
-t = Transformer(mp).to('cuda')
+t = Transformer(mp).to(device)
 tr = TransformerTrainer(mp, t, data)
 
 #epochs

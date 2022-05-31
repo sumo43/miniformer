@@ -32,6 +32,7 @@ def preprocess_data(mp, train, val, test=False):
     en_tokenizer = get_tokenizer('moses', language='en')    
     train_iter = iter(train)
     batch_size = mp.batch_size
+    device = mp.device
 
     en_vocab = build_vocab_from_iterator(map(en_tokenizer, train_iter), specials=['<unk>', '<pad>', '<bos>', '<eos>'])
 
@@ -47,7 +48,7 @@ def preprocess_data(mp, train, val, test=False):
         e = ['<bos>', *e, '<eos>']
         num_pad_tokens = mp.max_seq_length - len(e)
         [e.append('<pad>') for i in range(num_pad_tokens)] 
-        curr_batch.append(torch.tensor([en_vocab[a] for a in e]).unsqueeze(0).to('cuda:0'))
+        curr_batch.append(torch.tensor([en_vocab[a] for a in e]).unsqueeze(0).to(device))
 
         if it != 0 and it % batch_size == 0:
             curr_batch = torch.cat(curr_batch)
@@ -67,7 +68,7 @@ def preprocess_data(mp, train, val, test=False):
         e = ['<bos>', *e, '<eos>']
         num_pad_tokens = mp.max_seq_length - len(e)
         [e.append('<pad>') for i in range(num_pad_tokens)]
-        curr_batch.append(torch.tensor([es_vocab[a] for a in e]).unsqueeze(0).to('cuda:0'))
+        curr_batch.append(torch.tensor([es_vocab[a] for a in e]).unsqueeze(0).to(device))
 
         if it != 0 and it % batch_size == 0:
             curr_batch = torch.cat(curr_batch)
