@@ -116,7 +116,7 @@ class TransformerTrainer:
 
             ind = i % len(self.in_ds)
 
-            if i % 1 == 0:
+            if i % 200 == 0:
                 _print = True
             else:
                 _print = False
