@@ -116,7 +116,7 @@ class TransformerTrainer:
 
             ind = i % len(self.in_ds)
 
-            if i % 200 == 0:
+            if i % 50 == 0:
                 _print = True
             else:
                 _print = False
@@ -128,12 +128,13 @@ class TransformerTrainer:
                 print(e)
                 continue
         
+        
     def train_iteration(self, model, x, y, loss_fn, optimizer, _print=False, i=0):
 
         # feed the outputs shifted right, but we later compute loss w/ non-shifted
         y_pred = model(x, y)
 
-        print(x.shape)
+        #print(x.shape)
 
         if _print:
             y_old = y
@@ -141,12 +142,13 @@ class TransformerTrainer:
         
         y = y[:, 1:]
         y_pred = y_pred[:, :-1]
-
+        """
         if i > 0:
             lr = math.pow(float(self.d_model), -0.5) * math.pow(float(i), -0.5)
 
             for g in optimizer.param_groups:
                 g['lr'] = lr
+        """
         optimizer.zero_grad()
 
         batch_size, seq_len, vocab_size = y_pred.shape
@@ -159,8 +161,8 @@ class TransformerTrainer:
         optimizer.step()
 
 
-        print(y_old.shape)
-        print(y_pred_old.shape)
+        #print(y_old.shape)
+        #print(y_pred_old.shape)
 
         if _print:
             print(to_words(x[0], self.eng_vocab))

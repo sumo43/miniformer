@@ -27,8 +27,8 @@ def pad_sentences(mp, ds, tokenizer, voc):
 def preprocess_data(mp, train, val, test=False):
 
     if test:
-        train = train[:10000]
-        val = val[:10000]
+        train = train[-10000:]
+        val = val[-10000:]
 
     en_tokenizer = get_tokenizer('moses', language='en')    
     train_iter = iter(train)
@@ -75,11 +75,7 @@ def preprocess_data(mp, train, val, test=False):
             curr_batch = torch.cat(curr_batch)
             out_ds.append(curr_batch)
             curr_batch = []
-        
 
-    print(to_words(in_ds[0][0], en_vocab))
-    print(to_words(out_ds[0][0], es_vocab))
-    
     mp.set_en_vocab_size(len(en_vocab))
     mp.set_es_vocab_size(len(es_vocab))
 

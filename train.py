@@ -47,8 +47,13 @@ tr = TransformerTrainer(mp, t, data)
 
 #epochs
 for i in range(NUM_BATCHES):
-    print(f'epoch {i}')
-    tr.train()
+  import torch
+  from google.colab import files
+  torch.save(t, 'model.pt')
+  files.download('model.pt')
+  print(f'epoch {i}')
+  tr.train()
+    
 
 #ev = TransformerEvaluator(mp, t, data)
 
