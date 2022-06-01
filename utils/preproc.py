@@ -5,6 +5,7 @@ from torchtext.data.utils import get_tokenizer
 from collections import Counter
 from torchtext.vocab import Vocab, build_vocab_from_iterator
 from torchtext.utils import download_from_url, extract_archive
+from utils.general import to_words
 import io
 
 """
@@ -74,6 +75,10 @@ def preprocess_data(mp, train, val, test=False):
             curr_batch = torch.cat(curr_batch)
             out_ds.append(curr_batch)
             curr_batch = []
+        
+
+    print(to_words(in_ds[0][0], en_vocab))
+    print(to_words(out_ds[0][0], es_vocab))
     
     mp.set_en_vocab_size(len(en_vocab))
     mp.set_es_vocab_size(len(es_vocab))

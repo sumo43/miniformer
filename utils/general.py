@@ -7,6 +7,14 @@ from tqdm import tqdm
 
 VERY_SMOL_NUM = -33209582095375352525228572587289578295.
 
+def to_words(_input: torch.Tensor, vocab):
+
+    print(_input)
+    itos = vocab.get_itos()
+    ret = []
+
+    return [itos[i] for i in _input]
+
 class PositionalEncoder(nn.Module):
     def __init__(self, mp):
         super().__init__()
@@ -91,12 +99,11 @@ class TransformerTrainer:
         self.d_model = mp.d_model
         self.in_ds, self.out_ds, self.eng_vocab, self.sp_vocab = data
 
-        print('shuffling...')
+        print(to_words(self.in_ds[0][0], self.eng_vocab))
+        print(to_words(self.out_ds[0][0], self.sp_vocab))
 
-        shuffle(self.in_ds)
-        shuffle(self.out_ds)
-
-        print('done shuffling')
+        print(to_words(self.in_ds[0][0], self.eng_vocab))
+        print(to_words(self.out_ds[0][0], self.sp_vocab))
 
         self.optimizer = torch.optim.Adam(model.parameters(), betas=(self.beta_1, self.beta_2))
         self.loss = torch.nn.CrossEntropyLoss()
@@ -109,7 +116,7 @@ class TransformerTrainer:
 
             ind = i % len(self.in_ds)
 
-            if i % 100 == 0:
+            if i % 1 == 0:
                 _print = True
             else:
                 _print = False
@@ -124,12 +131,14 @@ class TransformerTrainer:
     def train_iteration(self, model, x, y, loss_fn, optimizer, _print=False, i=0):
 
         # feed the outputs shifted right, but we later compute loss w/ non-shifted
-        y_pred = model(x, y[-1:])
+        y_pred = model(x, y)
+
+        print(x.shape)
 
         if _print:
             y_old = y
             y_pred_old = y_pred
-
+        
         y = y[:, 1:]
         y_pred = y_pred[:, :-1]
 
@@ -149,8 +158,16 @@ class TransformerTrainer:
         loss.backward()
         optimizer.step()
 
+
+        print(y_old.shape)
+        print(y_pred_old.shape)
+
         if _print:
+            print(to_words(x[0], self.eng_vocab))
+            print(to_words(y_old[0], self.sp_vocab))
             y_pred_arg = torch.argmax(y_pred_old, dim=2)
+            print(to_words(y_pred_arg[0], self.sp_vocab))
+            
 
         if _print:
             print(loss.item())
