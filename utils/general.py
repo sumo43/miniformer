@@ -4,6 +4,7 @@ import math
 from time import sleep
 from random import shuffle
 from tqdm import tqdm
+from torchtext.data.utils import get_tokenizer
 
 VERY_SMOL_NUM = -33209582095375352525228572587289578295.
 
@@ -65,7 +66,9 @@ class ModelParams():
 
         # d_k = d_v = d_model / h
         self.d_v = self.d_k = d_model // h
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.device = 'cpu' #'cuda' if torch.cuda.is_available() else 'cpu'
+
+        print(self.device)
 
         self.dropout = 0.1
         self.adam_params = {
@@ -174,6 +177,14 @@ class TransformerTrainer:
         if _print:
             print(loss.item())
 
+def to_tokens(x, eng_vocab):
+
+    _out = []
+    for word in x:
+        _out.append(eng_vocab(word))
+    
+    return torch.tensor(_out)
+
 class TransformerEvaluator:
 
     def __init__(self, mp, model, data):
@@ -181,14 +192,46 @@ class TransformerEvaluator:
         # greedy search
         self.mp = mp
         self.model = model
-        _, _, self.eng_vocab, self.sp_vocab = data
+        self.eng_vocab, self.sp_vocab = data
+
+        self.eng_vocab.set_default_index(0)
+        self.sp_vocab.set_default_index(0)
     
-    def eval(self):
+    def eval(self, x):
 
         # eval until </s> token or reach max seq length
+        en_tokenizer = get_tokenizer('moses', language='en')
+        x = en_tokenizer(x)
 
-        for i in range(1, 10000): 
-            self.eval_iteration(self.model, self.in_ds[ind], self.out_ds[ind], self.loss, self.optimizer)
+        [x.append('<pad>') for i in range(128 - len(x))]
+
+        x_in = torch.tensor(self.eng_vocab(x))
+
+        y = []
+
+        y.append('<bos>')
+
+
+        #[y.append('<pad>') for i in range(127)]
+
+        x_in = x_in.unsqueeze(0)
+        y_in = torch.tensor(self.sp_vocab(y)).unsqueeze(0)
+
+        for i in range(127):
+            val, ind = torch.topk(self.model(x_in, y_in), 5, dim=2)
+
+            print(ind)
+
+            print(ind.shape)
+            for j in range(5):
+                print(to_words(ind[:, :, j], self.sp_vocab))
+
+            print(to_words(x[0], self.eng_vocab))
+            print(to_words(y_in[0], self.sp_vocab))
+
+            return
+
+        print(y_in)
 
     def eval_iteration(self, model, x, y, loss_fn, optimizer):
 
