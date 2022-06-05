@@ -6,12 +6,13 @@ from collections import Counter
 from torchtext.utils import download_from_url, extract_archive
 from utils.general import to_words
 from utils.data import load_data
-from tokenizers import Tokenizer
+from transformers import Tokenizer
 from tokenizers.models import BPE
 from tokenizers.trainers import BpeTrainer
 from tokenizers.pre_tokenizers import Whitespace
 from tokenizers.processors import TemplateProcessing
 from torch.utils.data import Dataset, DataLoader
+#from transformers import PreTrainedTokenizerFast
 import io
 import os
 
@@ -46,14 +47,13 @@ class TransformerDataset:
 
         self.en_tokenizer = None
         self.es_tokenizer = None
-
         self.en_data = None
         self.es_data = None
-
         self.dev = None
 
         if os.path.exists(TOK_FILE_LOC):
             tokenizer = Tokenizer.from_file(TOK_FILE_LOC)
+            
         else:
             tokenizer = Tokenizer(BPE(unk_token="[UNK]", bos_token='[BOS]', eos_token='[EOS]', pad_token='[PAD]'))
             tokenizer.pre_tokenizer = Whitespace()
@@ -79,11 +79,14 @@ class TransformerDataset:
             )
 
             tokenizer.train(files, trainer)
-            tokenizer.save(TOK_FILE_LOC)
             tokenizer.enable_padding(pad_id=3, pad_token='[PAD]')
+            tokenizer.save(TOK_FILE_LOC)
+            
         
         raw_en_ds = load_data(EN_DEV_LOC)
         raw_es_ds = load_data(ES_DEV_LOC)
+
+        print(tokenizer(raw_en_ds))
 
         train_en_ds = torch.utils.data.DataLoader(raw_en_ds, batch_size=32, shuffle=True, collate_fn = lambda x: tokenizer.encode_batch(x))
         train_es_ds = torch.utils.data.DataLoader(raw_en_ds, batch_size=32, shuffle=True, collate_fn = lambda x: tokenizer.encode_batch(x)) 
@@ -92,13 +95,8 @@ class TransformerDataset:
 
             item = [torch.tensor(a.ids) for a in item]
 
-            print(item)
-
-            print(x)
-            print(y)
-
-            print(x.tokens)
-            print(y.tokens)
+            print(item[0].shape)
+            print(item[-1].shape)
 
             return
 
