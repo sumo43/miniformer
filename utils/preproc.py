@@ -95,11 +95,8 @@ class TransformerDataset:
         self.ds = ds
         self.tokenizer = tokenizer
 
-    def get_en(self):
-        return self.train_en_ds
-
-    def get_es(self):
-        return self.train_es_ds
+    def get_ds(self):
+        return self.ds
 
     def get_tokenizer(self):
         return self.tokenizer

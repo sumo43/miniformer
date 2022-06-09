@@ -188,7 +188,7 @@ class Transformer(Module):
         self.d_model = mp.d_model
         self.d_ff = mp.d_ff
 
-        self.input_embedding = TransformerEmbedding(self.mp, self.en_vocab_size)
+        self.input_embedding = TransformerEmbedding(self.mp, self.en_vocab_size + self.es_vocab_size)
         self.output_embedding = TransformerEmbedding(self.mp, self.es_vocab_size)
         self.pos_encoding = PositionalEncoder(self.mp)
         self.encoder = TransformerEncoder(self.mp)

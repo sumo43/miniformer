@@ -5,12 +5,13 @@ from time import sleep
 from random import shuffle
 from tqdm import tqdm
 from torchtext.data.utils import get_tokenizer
+from transformers.utils.dummy_tf_objects import TF_DEBERTA_PRETRAINED_MODEL_ARCHIVE_LIST
 from model.transformer import Transformer
 from utils.preproc import TransformerDataset
 from utils.general import ModelParams
 
 class TransformerTrainer:
-    def __init__(self, mp: ModelParams, model: Transformer, ds: TransformerDataset):
+    def __init__(self, mp: ModelParams, model: Transformer, td: TransformerDataset):
         
         # other params 
 
@@ -36,24 +37,22 @@ class TransformerTrainer:
 
         # dataset and tokenizer
 
-        self.en_train_ds = ds.get_en()
-        self.es_train_ds = ds.get_es()
-        self.tokenizer = ds.get_tokenizer()
+        self.td = td
+        self.ds = self.td.get_ds()
+        self.tokenizer = self.td.get_tokenizer()
 
-    
     def test_train(self):
 
-        for (train_example, label_example) in zip(self.en_train_ds, self.es_train_ds):
-
-            print(train_example['input_ids'].shape)
-
-            print(self.tokenizer.batch_decode(train_example['input_ids']))
-            print(self.tokenizer.batch_decode(label_example['input_ids']))
+        for (train_example, label_example) in self.ds:
 
             x = train_example['input_ids']
             y = label_example['input_ids']
+
+            print(x.shape)
+            print(y.shape)
             
-            y_pred = mdoel()
+            y_pred = self.model(x, y)
+
             return
     
     def train(self):
