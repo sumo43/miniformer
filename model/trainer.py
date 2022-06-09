@@ -69,7 +69,10 @@ class TransformerTrainer:
             self._validate()
 
     def _train(self):
-        for (train_example, label_example) in tqdm(self.ds):
+
+        running_loss = 0
+
+        for i, (train_example, label_example) in enumerate(tqdm(self.ds)):
             # training step
 
             x = train_example['input_ids']
@@ -98,6 +101,13 @@ class TransformerTrainer:
                 for g in optimizer.param_groups:
                     g['lr'] = lr
             """
+
+            # running loss
+            if i % 100 == 999:
+                running_loss /= 100
+                print(f'batch {i} loss: {running_loss}')
+                running_loss = 0
+
     
     """
 
