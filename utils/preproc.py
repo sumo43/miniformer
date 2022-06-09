@@ -12,13 +12,30 @@ from transformers import PreTrainedTokenizerFast
 import os
 
 
-EN_DEV_LOC = os.path.join('data', 'opus.en-es-dev.en')
-ES_DEV_LOC = os.path.join('data', 'opus.en-es-dev.es')
-EN_TRAIN_LOC = os.path.join('data', 'opus.en-es-train.en')
-ES_TRAIN_LOC = os.path.join('data', 'opus.en-es-train.es')
-EN_TEST_LOC = os.path.join('data', 'opus.en-es-test.es')
-ES_TEST_LOC = os.path.join('data', 'opus.en-es-test.es')
+EN_DEV_LOC = os.path.join('data', 'en_dev.txt')
+ES_DEV_LOC = os.path.join('data', 'es_dev.txt')
+EN_TRAIN_LOC = os.path.join('data', 'en_test.txt')
+ES_TRAIN_LOC = os.path.join('data', 'es_test.txt')
+EN_TEST_LOC = os.path.join('data', 'en_train.txt')
+ES_TEST_LOC = os.path.join('data', 'es_train.txt')
 TOK_FILE_LOC = os.path.join('data', 'tokenizer-wiki.json')
+
+class CombinedDataset(torch.utils.data.Dataset):
+  'Characterizes a dataset for PyTorch'
+  def __init__(self, x, y):
+        'Initialization'
+        self.x = x
+        self.y = y
+        self._len = len(self.x)
+
+  def __len__(self):
+        return self._len
+
+  def __getitem__(self, index):
+        'Generates one sample of data'
+        # Select sample
+        return (self.x[index], self.y[index])
+
 
 # this just includes both datasets as torch.nn.Dataset 
 class TransformerDataset:
@@ -67,25 +84,15 @@ class TransformerDataset:
         mp.en_vocab_size = len(raw_en_ds)
         mp.es_vocab_size = len(raw_es_ds)
 
-        print(raw_en_ds[0])
-        print(raw_en_ds[0])
-
         tokenizer.add_special_tokens({'pad_token': '[PAD]'})
 
-        train_en_ds = torch.utils.data.DataLoader(raw_en_ds, batch_size=32, shuffle=True, collate_fn = lambda x: tokenizer(x, padding='longest', return_tensors='pt'))
-        train_es_ds = torch.utils.data.DataLoader(raw_en_ds, batch_size=32, shuffle=True, collate_fn = lambda x: tokenizer(x, padding='longest', return_tensors='pt')) 
+        c = CombinedDataset(raw_en_ds, raw_es_ds)
 
+        ds = torch.utils.data.DataLoader(c, batch_size=32, shuffle=True, collate_fn = lambda x: (tokenizer([y[0] for y in x], padding='longest', return_tensors='pt'), tokenizer([y[1] for y in x], padding='longest', return_tensors='pt')))
 
-        print
+        # dataset and tokenizer
 
-        self.train_en_ds = train_en_ds
-        self.train_es_ds = train_es_ds
-
-        """
-        self.train_en_ds_iter = iter(self.train_en_ds)
-        self.train_es_ds_iter = iter(self.train_es_ds)
-        """
-
+        self.ds = ds
         self.tokenizer = tokenizer
 
     def get_en(self):
