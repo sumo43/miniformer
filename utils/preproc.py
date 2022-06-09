@@ -14,10 +14,10 @@ import os
 
 EN_DEV_LOC = os.path.join('data', 'en_dev.txt')
 ES_DEV_LOC = os.path.join('data', 'es_dev.txt')
-EN_TRAIN_LOC = os.path.join('data', 'en_test.txt')
-ES_TRAIN_LOC = os.path.join('data', 'es_test.txt')
-EN_TEST_LOC = os.path.join('data', 'en_train.txt')
-ES_TEST_LOC = os.path.join('data', 'es_train.txt')
+EN_TRAIN_LOC = os.path.join('data', 'en_train.txt')
+ES_TRAIN_LOC = os.path.join('data', 'es_train.txt')
+EN_TEST_LOC = os.path.join('data', 'en_test.txt')
+ES_TEST_LOC = os.path.join('data', 'es_test.txt')
 TOK_FILE_LOC = os.path.join('data', 'tokenizer-wiki.json')
 
 class CombinedDataset(torch.utils.data.Dataset):
@@ -78,22 +78,32 @@ class TransformerDataset:
             tokenizer.train(files, trainer)
             tokenizer.save(TOK_FILE_LOC)
             
-        raw_en_ds = load_data(EN_DEV_LOC)
-        raw_es_ds = load_data(ES_DEV_LOC)
+        raw_en_ds = load_data(EN_TRAIN_LOC, toy=True)
+        raw_es_ds = load_data(ES_TRAIN_LOC, toy=True)
 
-        mp.en_vocab_size = len(raw_en_ds)
-        mp.es_vocab_size = len(raw_es_ds)
+        raw_en_val = load_data(EN_TEST_LOC)
+        raw_es_val = load_data(ES_TEST_LOC)
+
+        mp.en_vocab_size = tokenizer.vocab_size
+        mp.es_vocab_size = tokenizer.vocab_size
 
         tokenizer.add_special_tokens({'pad_token': '[PAD]'})
 
         c = CombinedDataset(raw_en_ds, raw_es_ds)
+        c_v = CombinedDataset(raw_en_val, raw_es_val)
 
-        ds = torch.utils.data.DataLoader(c, batch_size=32, shuffle=True, collate_fn = lambda x: (tokenizer([y[0] for y in x], padding='longest', return_tensors='pt'), tokenizer([y[1] for y in x], padding='longest', return_tensors='pt')))
+        ds = torch.utils.data.DataLoader(c, batch_size=mp.batch_size, shuffle=True, collate_fn = lambda x: (tokenizer([y[0] for y in x], padding='longest', return_tensors='pt'), tokenizer([y[1] for y in x], padding='longest', return_tensors='pt')))
+        val_ds = torch.utils.data.DataLoader(c_v, batch_size=mp.batch_size, shuffle=True, collate_fn = lambda x: (tokenizer([y[0] for y in x], padding='longest', return_tensors='pt'), tokenizer([y[1] for y in x], padding='longest', return_tensors='pt')))
 
         # dataset and tokenizer
 
         self.ds = ds
+        self.val_ds = val_ds
         self.tokenizer = tokenizer
+
+    
+    def get_val_ds(self):
+        return self.val_ds
 
     def get_ds(self):
         return self.ds

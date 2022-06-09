@@ -22,7 +22,7 @@ n_decoders=4
 d_ff= 256
 # max length for both input and output, including <s> </s> 
 # we pad it up to this length
-max_seq_length = 128
+max_seq_length = 512
 batch_size = 32
 NUM_BATCHES = 20
 
@@ -34,6 +34,8 @@ mp = ModelParams(d_model=d_model,
     max_seq_length=max_seq_length,
     batch_size=batch_size
     )
+
+print(mp.batch_size)
 
 td = TransformerDataset(mp)
 device = mp.device

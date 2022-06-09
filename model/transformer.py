@@ -95,13 +95,15 @@ class TransformerEmbedding(Module):
         super().__init__()
 
         self.d_model = mp.d_model 
-        self.embedding = torch.nn.Embedding(size, self.d_model, padding_idx=1)
+
+        print(size)
+        print(self.d_model)
+        self.embedding = torch.nn.Embedding(size, self.d_model, padding_idx=3)
 
     def forward(self, x):
 
         x = self.embedding(x)
         return x
-
 
 class DecoderBlock(Module):
     
@@ -188,8 +190,8 @@ class Transformer(Module):
         self.d_model = mp.d_model
         self.d_ff = mp.d_ff
 
-        self.input_embedding = TransformerEmbedding(self.mp, self.en_vocab_size + self.es_vocab_size)
-        self.output_embedding = TransformerEmbedding(self.mp, self.es_vocab_size)
+        self.input_embedding = TransformerEmbedding(self.mp, self.en_vocab_size)
+        self.output_embedding = TransformerEmbedding(self.mp, self.en_vocab_size)
         self.pos_encoding = PositionalEncoder(self.mp)
         self.encoder = TransformerEncoder(self.mp)
         self.decoder = TransformerDecoder(self.mp)
