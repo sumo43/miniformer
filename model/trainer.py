@@ -93,6 +93,9 @@ class TransformerTrainer:
             loss.backward()
             self.optimizer.step()
 
+            running_loss += loss.item()
+
+
             # code for setting good learning rate from paper
             """
             if i > 0:
@@ -108,16 +111,42 @@ class TransformerTrainer:
                 print(f'batch {i} loss: {running_loss}')
                 running_loss = 0
 
-    
-    """
-
     def _validate(self):
-        for (train_example, label_example in self.val_ds):
     
-    """
+        running_loss = 0
+        starting_sentence = [['[BOS]'] for i in range(mp.batch_size)]
+        val_loss = torch.nn.MSELoss()
 
+        for i, (val_example, label_example) in enumerate(tqdm(self.val_ds)):
+            # training step
 
+            x = val_example['input_ids']
+            y = label_example['input_ids']
+
+            y_pred = starting_sentence
+            while(y_pred.shape[1] != y.shape[1]):
+                y_pred = torch.argmax(self.model(x, y_pred), -1)
         
+            # resize everything
+            y_pred = y_pred.ravel()
+            y_shifted = y_shifted.ravel()
+            loss = val_loss(y_pred, y_shifted)
+            running_loss += loss.item()
+
+            # code for setting good learning rate from paper
+            """
+            if i > 0:
+                lr = math.pow(float(self.d_model), -0.5) * math.pow(float(i), -0.5)
+
+                for g in optimizer.param_groups:
+                    g['lr'] = lr
+            """
+
+            # running loss
+            if i % 100 == 999:
+                running_loss /= 100
+                print(f'val_batch {i} val_loss: {running_loss}')
+                running_loss = 0
 
 class TransformerEvaluator:
 
