@@ -1,10 +1,6 @@
 import torchtext
 import torch
-import torch.nn.functional as F
 from torchtext.data.utils import get_tokenizer
-from collections import Counter
-from torchtext.utils import download_from_url, extract_archive
-from utils.general import to_words
 from utils.data import load_data
 from tokenizers import Tokenizer
 from tokenizers.models import BPE
@@ -13,7 +9,6 @@ from tokenizers.pre_tokenizers import Whitespace
 from tokenizers.processors import TemplateProcessing
 from torch.utils.data import Dataset, DataLoader
 from transformers import PreTrainedTokenizerFast
-import io
 import os
 
 
@@ -69,10 +64,19 @@ class TransformerDataset:
         raw_en_ds = load_data(EN_DEV_LOC)
         raw_es_ds = load_data(ES_DEV_LOC)
 
+        mp.en_vocab_size = len(raw_en_ds)
+        mp.es_vocab_size = len(raw_es_ds)
+
+        print(raw_en_ds[0])
+        print(raw_en_ds[0])
+
         tokenizer.add_special_tokens({'pad_token': '[PAD]'})
 
-        train_en_ds = torch.utils.data.DataLoader(raw_en_ds, batch_size=32, shuffle=True, collate_fn = lambda x: tokenizer(x, padding='longest'))
-        train_es_ds = torch.utils.data.DataLoader(raw_en_ds, batch_size=32, shuffle=True, collate_fn = lambda x: tokenizer(x, padding='longest')) 
+        train_en_ds = torch.utils.data.DataLoader(raw_en_ds, batch_size=32, shuffle=True, collate_fn = lambda x: tokenizer(x, padding='longest', return_tensors='pt'))
+        train_es_ds = torch.utils.data.DataLoader(raw_en_ds, batch_size=32, shuffle=True, collate_fn = lambda x: tokenizer(x, padding='longest', return_tensors='pt')) 
+
+
+        print
 
         self.train_en_ds = train_en_ds
         self.train_es_ds = train_es_ds
@@ -91,4 +95,4 @@ class TransformerDataset:
         return self.train_es_ds
 
     def get_tokenizer(self):
-        return self.tokenzizer
+        return self.tokenizer

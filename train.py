@@ -1,7 +1,8 @@
-from utils.general import ModelParams, TransformerTrainer
+from utils.general import ModelParams
 from utils.data import load_data
-from utils.preproc import preprocess_data, postprocess_data, to_string
+from utils.preproc import TransformerDataset
 from model.transformer import Transformer
+from model.trainer import TransformerTrainer
 
 """
 
@@ -34,24 +35,10 @@ mp = ModelParams(d_model=d_model,
     batch_size=batch_size
     )
 
-inputs, outputs = load_data(mp)
-in_ds, out_ds, eng_vocab, sp_vocab = preprocess_data(mp, inputs, outputs, test=True)
-
-data = (in_ds, out_ds, eng_vocab, sp_vocab)
-
+td = TransformerDataset(mp)
 device = mp.device
-
-#t = SimpleFormer(mp)
 t = Transformer(mp).to(device)
-tr = TransformerTrainer(mp, t, data)
-
-#epochs
-for i in range(NUM_BATCHES):
-    tr.train()
-    torch.save(t, 'model.pt')
-
-print('finished training')
-    
+tr = TransformerTrainer(mp, t, td)
 #ev = TransformerEvaluator(mp, t, data)
 
-#tr.eval()
+tr.test_train()

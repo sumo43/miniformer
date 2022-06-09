@@ -11,7 +11,7 @@ from utils.general import PositionalEncoder
 
 """
 
-The code for transformer. Find attention mechanism in attention.py
+The code for transformer. attention mechanism in attention.py
 
 """
 
