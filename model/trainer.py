@@ -39,8 +39,10 @@ class TransformerTrainer:
 
         self.td = td
         self.ds = self.td.get_ds()
+        self.val_ds = self.tf.get_val_ds()
         self.tokenizer = self.td.get_tokenizer()
 
+        # todo make this not a constatn
 
         self.vocab_size = 30000
 
