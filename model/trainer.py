@@ -39,15 +39,24 @@ class TransformerTrainer:
 
         self.td = td
         self.ds = self.td.get_ds()
-        self.val_ds = self.tf.get_val_ds()
+        self.val_ds = self.td.get_val_ds()
         self.tokenizer = self.td.get_tokenizer()
 
         # todo make this not a constatn
 
         self.vocab_size = 30000
+        self.tokenizer = self.td.tokenizer
+
+        # interval over which to run validation loop (2min)#
+        # 30000 iterations is about half an hour
+
+        self.val_interval = 10
+
+
+        self.batch_size = mp.batch_size
+
 
     def test_train(self):
-
 
         self.train()
         for (train_example, label_example) in self.ds:
@@ -68,7 +77,7 @@ class TransformerTrainer:
         for epoch in range(1):
             self._train()
             # print like 5 sentence comparisons
-            self._validate()
+            #self._validate()
 
     def _train(self):
 
@@ -97,7 +106,6 @@ class TransformerTrainer:
 
             running_loss += loss.item()
 
-
             # code for setting good learning rate from paper
             """
             if i > 0:
@@ -113,97 +121,45 @@ class TransformerTrainer:
                 print(f'batch {i} loss: {running_loss}')
                 running_loss = 0
 
+            if i % self.val_interval == 0:
+                print('validating...')
+                self._validate()
+
     def _validate(self):
     
         running_loss = 0
-        starting_sentence = [['[BOS]'] for i in range(mp.batch_size)]
+
         val_loss = torch.nn.MSELoss()
 
         for i, (val_example, label_example) in enumerate(tqdm(self.val_ds)):
-            # training step
+
+            starting_sentence = torch.zeros((1, 1))
+            starting_sentence = starting_sentence.type(torch.IntTensor)
+            starting_sentence[0, 0] = 1
+
+            y_pred = starting_sentence
 
             x = val_example['input_ids']
             y = label_example['input_ids']
+            y_shifted = y[:, 1:]
 
-            y_pred = starting_sentence
-            while(y_pred.shape[1] != y.shape[1]):
-                y_pred = torch.argmax(self.model(x, y_pred), -1)
+            while(y_pred.shape[1] != y.shape[1] - 1):
+
+                new_y_pred = torch.argmax(self.model(x, y_pred), -1)[:, -1:]
+                y_pred = torch.cat([y_pred, new_y_pred], dim=1)
         
-            # resize everything
-            y_pred = y_pred.ravel()
-            y_shifted = y_shifted.ravel()
-            loss = val_loss(y_pred, y_shifted)
+            # resize everything, also make it floaty for loss
+            # i know that this loss is stupid, but im too lazy to make cross entropy loss work
+            y_pred_fl = y_pred.ravel().type(torch.FloatTensor)
+            y_shifted_fl = y_shifted.ravel().type(torch.FloatTensor)
+
+            loss = val_loss(y_pred_fl, y_shifted_fl)
             running_loss += loss.item()
 
-            # code for setting good learning rate from paper
-            """
-            if i > 0:
-                lr = math.pow(float(self.d_model), -0.5) * math.pow(float(i), -0.5)
-
-                for g in optimizer.param_groups:
-                    g['lr'] = lr
-            """
-
             # running loss
-            if i % 100 == 999:
+            if i % 100 == 0:
                 running_loss /= 100
                 print(f'val_batch {i} val_loss: {running_loss}')
+                print(self.tokenizer.batch_decode(x)[0])
+                print(self.tokenizer.batch_decode(y_pred)[0])
                 running_loss = 0
-
-class TransformerEvaluator:
-
-    def __init__(self, mp, model, data):
-
-        # greedy search
-        self.mp = mp
-        self.model = model
-        self.eng_vocab, self.sp_vocab = data
-
-        self.eng_vocab.set_default_index(0)
-        self.sp_vocab.set_default_index(0)
-    
-    def eval(self, x):
-
-        # eval until </s> token or reach max seq length
-        en_tokenizer = get_tokenizer('moses', language='en')
-        x = en_tokenizer(x)
-
-        [x.append('<pad>') for i in range(128 - len(x))]
-
-        x_in = torch.tensor(self.eng_vocab(x))
-
-        y = []
-
-        y.append('<bos>')
-
-        #[y.append('<pad>') for i in range(127)]
-
-        x_in = x_in.unsqueeze(0)
-        y_in = torch.tensor(self.sp_vocab(y)).unsqueeze(0)
-
-        for i in range(127):
-            val, ind = torch.topk(self.model(x_in, y_in), 5, dim=2)
-
-            print(ind)
-
-            print(ind.shape)
-            for j in range(5):
-                print(to_words(ind[:, :, j], self.sp_vocab))
-
-            print(to_words(x[0], self.eng_vocab))
-            print(to_words(y_in[0], self.sp_vocab))
-
-            return
-
-        print(y_in)
-
-    def eval_iteration(self, model, x, y, loss_fn, optimizer):
-
-        y_pred = model(x, y)
-        optimizer.zero_grad()
-
-        loss = loss_fn(y_pred, y)
-        loss.backward()
-        optimizer.step()
-
-        print(loss.item())
