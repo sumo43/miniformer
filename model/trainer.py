@@ -51,59 +51,68 @@ class TransformerTrainer:
         # interval over which to run validation loop (2min)#
         # 30000 iterations is about half an hour
 
-        self.val_interval = 30000 // 32
+        self.val_interval = 60000 // 32
 
         self.batch_size = mp.batch_size
     
     def train(self):
         for epoch in range(1):
             self._train()
+    
+    def save(self):
+        torch.save(self.model, 'model.pt')
 
     def _train(self):
+
 
         running_loss = 0
 
         for i, (train_example, label_example) in enumerate(tqdm(self.ds)):
-            # training step
 
-            x = train_example['input_ids']
-            y = label_example['input_ids']
+            try:
+                # training step
 
-            y_shifted = y[:, 1:]
-            y = y[:, :-1]
+                x = train_example['input_ids']
+                y = label_example['input_ids']
 
-            # feed the outputs shifted right, but we later compute loss w/ non-shifted
-            y_pred = self.model(x, y)
+                y_shifted = y[:, 1:]
+                y = y[:, :-1]
 
-            # resize everything for CEloss
-            y_pred = y_pred.view(-1, self.vocab_size)
-            y_shifted = y_shifted.ravel()
-            
-            self.optimizer.zero_grad()
-            loss = self.loss_fn(y_pred, y_shifted)
-            loss.backward()
-            self.optimizer.step()
+                # feed the outputs shifted right, but we later compute loss w/ non-shifted
+                y_pred = self.model(x, y)
 
-            running_loss += loss.item()
+                # resize everything for CEloss
+                y_pred = y_pred.view(-1, self.vocab_size)
+                y_shifted = y_shifted.ravel()
+                
+                self.optimizer.zero_grad()
+                loss = self.loss_fn(y_pred, y_shifted)
+                loss.backward()
+                self.optimizer.step()
 
-            # code for setting good learning rate from paper
-            """
-            if i > 0:
-                lr = math.pow(float(self.d_model), -0.5) * math.pow(float(i), -0.5)
+                running_loss += loss.item()
 
-                for g in optimizer.param_groups:
-                    g['lr'] = lr
-            """
+                # code for setting good learning rate from paper
+                """
+                if i > 0:
+                    lr = math.pow(float(self.d_model), -0.5) * math.pow(float(i), -0.5)
 
-            # running loss
-            if i % 100 == 999:
-                running_loss /= 100
-                print(f'batch {i} loss: {running_loss}')
-                running_loss = 0
+                    for g in optimizer.param_groups:
+                        g['lr'] = lr
+                """
 
-            if i % self.val_interval == 0:
-                print('validating...')
-                self._validate()
+                # running loss
+                if i % 100 == 999:
+                    running_loss /= 100
+                    print(f'batch {i} loss: {running_loss}')
+                    running_loss = 0
+
+                if i % self.val_interval == self.val_interval - 1:
+                    print('validating...')
+                    self._validate()
+                    self.save()
+            except RuntimeError as e:
+                print(e)
 
     def _validate(self):
     

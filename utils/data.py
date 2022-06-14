@@ -15,6 +15,6 @@ def load_data(data_loc, toy=False):
             data.append(line)
     
     if toy:
-        data = data[:150000]
+        data = data[:300000]
 
     return data
