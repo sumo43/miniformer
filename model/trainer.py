@@ -10,6 +10,7 @@ from model.transformer import Transformer
 from utils.preproc import TransformerDataset
 from utils.general import ModelParams
 
+
 class TransformerTrainer:
     def __init__(self, mp: ModelParams, model: Transformer, td: TransformerDataset):
         
