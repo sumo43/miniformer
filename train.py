@@ -22,7 +22,7 @@ n_decoders=4
 d_ff= 256
 # max length for both input and output, including <s> </s> 
 # we pad it up to this length
-max_seq_length = 2048
+max_seq_length = 4096
 batch_size = 32
 NUM_BATCHES = 20
 
