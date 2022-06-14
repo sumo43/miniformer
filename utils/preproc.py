@@ -26,7 +26,7 @@ class CombinedDataset(torch.utils.data.Dataset):
         'Initialization'
         self.x = x
         self.y = y
-        self._len = len(self.x)
+        self._len = min(len(self.x), len(self.y))
 
   def __len__(self):
         return self._len
@@ -93,7 +93,7 @@ class TransformerDataset:
         c_v = CombinedDataset(raw_en_val, raw_es_val)
 
         ds = torch.utils.data.DataLoader(c, batch_size=mp.batch_size, shuffle=True, collate_fn = lambda x: (tokenizer([y[0] for y in x], padding='longest', return_tensors='pt'), tokenizer([y[1] for y in x], padding='longest', return_tensors='pt')))
-        val_ds = torch.utils.data.DataLoader(c_v, batch_size=mp.batch_size, shuffle=True, collate_fn = lambda x: (tokenizer([y[0] for y in x], padding='longest', return_tensors='pt'), tokenizer([y[1] for y in x], padding='longest', return_tensors='pt')))
+        val_ds = torch.utils.data.DataLoader(c_v, batch_size=1, shuffle=True, collate_fn = lambda x: (tokenizer([y[0] for y in x], padding='longest', return_tensors='pt'), tokenizer([y[1] for y in x], padding='longest', return_tensors='pt')))
 
         # dataset and tokenizer
 

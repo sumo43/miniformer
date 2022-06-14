@@ -51,34 +51,13 @@ class TransformerTrainer:
         # interval over which to run validation loop (2min)#
         # 30000 iterations is about half an hour
 
-        self.val_interval = 10
-
+        self.val_interval = 30000 // 32
 
         self.batch_size = mp.batch_size
-
-
-    def test_train(self):
-
-        self.train()
-        for (train_example, label_example) in self.ds:
-
-            x = train_example['input_ids']
-            y = label_example['input_ids']
-
-            print(x.shape)
-            print(y.shape)
-
-            print(x)
-            
-            y_pred = self.model(x, y)
-
-            return
     
     def train(self):
         for epoch in range(1):
             self._train()
-            # print like 5 sentence comparisons
-            #self._validate()
 
     def _train(self):
 
@@ -128,9 +107,9 @@ class TransformerTrainer:
 
     def _validate(self):
     
-        running_loss = 0
+        #running_loss = 0
 
-        val_loss = torch.nn.MSELoss()
+        #val_loss = torch.nn.MSELoss()
 
         for i, (val_example, label_example) in enumerate(tqdm(self.val_ds)):
 
@@ -151,16 +130,16 @@ class TransformerTrainer:
         
             # resize everything, also make it floaty for loss
             # i know that this loss is stupid, but im too lazy to make cross entropy loss work
-            y_pred_fl = y_pred.ravel().type(torch.FloatTensor)
-            y_shifted_fl = y_shifted.ravel().type(torch.FloatTensor)
+            #y_pred_fl = y_pred.ravel().type(torch.FloatTensor)
+            #y_shifted_fl = y_shifted.ravel().type(torch.FloatTensor)
 
-            loss = val_loss(y_pred_fl, y_shifted_fl)
-            running_loss += loss.item()
+            #loss = val_loss(y_pred_fl, y_shifted_fl)
+            #running_loss += loss.item()
 
             # running loss
             if i % 100 == 0:
-                running_loss /= 100
-                print(f'val_batch {i} val_loss: {running_loss}')
+                #running_loss /= 100
+                #print(f'val_batch {i} val_loss: {running_loss}')
                 print(self.tokenizer.batch_decode(x)[0])
                 print(self.tokenizer.batch_decode(y_pred)[0])
-                running_loss = 0
+                #running_loss = 0
