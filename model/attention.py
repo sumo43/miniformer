@@ -41,7 +41,7 @@ class SDPAttention(Module):
         return mat / torch.sqrt(torch.tensor(self.d_k))
     
     def mask(self, x):
-        tri_mask = torch.triu(torch.ones(size=x.shape, dtype=torch.float), 1) * VERY_SMOL_NUM #.to(self.device) * VERY_SMOL_NUM
+        tri_mask = (torch.triu(torch.ones(size=x.shape, dtype=torch.float), 1) * VERY_SMOL_NUM).to(self.device) * VERY_SMOL_NUM
         x = x + tri_mask
         return x 
 

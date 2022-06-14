@@ -66,7 +66,7 @@ class ModelParams():
 
         # d_k = d_v = d_model / h
         self.d_v = self.d_k = d_model // h
-        self.device = 'cpu' #'cuda' if torch.cuda.is_available() else 'cpu'
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
         print(self.device)
 
