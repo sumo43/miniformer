@@ -17,6 +17,7 @@ class TransformerTrainer:
         # other params 
 
         self.mp = mp
+        self.device = mp.device
 
         # hyperparams 
 
@@ -56,14 +57,15 @@ class TransformerTrainer:
         self.batch_size = mp.batch_size
     
     def train(self):
-        for epoch in range(1):
+        for epoch in range(4):
+            self.epoch = epoch
             self._train()
+            self.save()
     
-    def save(self):
-        torch.save(self.model, 'model.pt')
+    def save(self, epoch):
+        torch.save(self.model, f'model_epoch{epoch}.pt')
 
     def _train(self):
-
 
         running_loss = 0
 
@@ -72,14 +74,16 @@ class TransformerTrainer:
             try:
                 # training step
 
-                x = train_example['input_ids']
-                y = label_example['input_ids']
+                x = train_example['input_ids'].to(self.device)
+                y = label_example['input_ids'].to(self.device)
 
                 y_shifted = y[:, 1:]
+                y_test = y_shifted
                 y = y[:, :-1]
 
                 # feed the outputs shifted right, but we later compute loss w/ non-shifted
                 y_pred = self.model(x, y)
+                y_pred_argmax = torch.argmax(y_pred, -1)
 
                 # resize everything for CEloss
                 y_pred = y_pred.view(-1, self.vocab_size)
@@ -95,16 +99,19 @@ class TransformerTrainer:
                 # code for setting good learning rate from paper
                 """
                 if i > 0:
-                    lr = math.pow(float(self.d_model), -0.5) * math.pow(float(i), -0.5)
-
-                    for g in optimizer.param_groups:
+                    lr = math.pow(float(self.d_model), -0.5) * math.pow(float(i * 32), -0.5)
+                    for g in self.optimizer.param_groups:
                         g['lr'] = lr
                 """
-
+            
                 # running loss
-                if i % 100 == 999:
+                if i % 100 == 99:
                     running_loss /= 100
-                    print(f'batch {i} loss: {running_loss}')
+                    print(f'epoch {self.epoch} batch {i} loss: {running_loss}')
+                    print(self.tokenizer.batch_decode(x)[0])
+                    print(self.tokenizer.batch_decode(y_test)[0])
+                    print(self.tokenizer.batch_decode(y_pred_argmax)[0])
+                    
                     running_loss = 0
 
                 if i % self.val_interval == self.val_interval - 1:
@@ -126,10 +133,10 @@ class TransformerTrainer:
             starting_sentence = starting_sentence.type(torch.IntTensor)
             starting_sentence[0, 0] = 1
 
-            y_pred = starting_sentence
+            y_pred = starting_sentence.to(self.device)
 
-            x = val_example['input_ids']
-            y = label_example['input_ids']
+            x = val_example['input_ids'].to(self.device)
+            y = label_example['input_ids'].to(self.device)
             y_shifted = y[:, 1:]
 
             while(y_pred.shape[1] != y.shape[1] - 1):
@@ -146,9 +153,10 @@ class TransformerTrainer:
             #running_loss += loss.item()
 
             # running loss
-            if i % 100 == 0:
+            if i % 1 == 0:
                 #running_loss /= 100
                 #print(f'val_batch {i} val_loss: {running_loss}')
                 print(self.tokenizer.batch_decode(x)[0])
+                print(self.tokenizer.batch_decode(y)[0])
                 print(self.tokenizer.batch_decode(y_pred)[0])
                 #running_loss = 0

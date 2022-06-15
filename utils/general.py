@@ -68,8 +68,6 @@ class ModelParams():
         self.d_v = self.d_k = d_model // h
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-        print(self.device)
-
         self.dropout = 0.1
         self.adam_params = {
             'beta_1': 0.9,

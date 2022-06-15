@@ -47,6 +47,7 @@ class TransformerDataset:
         self.en_data = None
         self.es_data = None
         self.dev = None
+        self.device = mp.device
 
         if os.path.exists(TOK_FILE_LOC):
             tokenizer = PreTrainedTokenizerFast(tokenizer_file=TOK_FILE_LOC)
@@ -81,8 +82,8 @@ class TransformerDataset:
         raw_en_ds = load_data(EN_TRAIN_LOC, toy=True)
         raw_es_ds = load_data(ES_TRAIN_LOC, toy=True)
 
-        raw_en_val = load_data(EN_TEST_LOC)
-        raw_es_val = load_data(ES_TEST_LOC)
+        raw_en_val = load_data(EN_TEST_LOC)[:100]
+        raw_es_val = load_data(ES_TEST_LOC)[:100]
 
         mp.en_vocab_size = tokenizer.vocab_size
         mp.es_vocab_size = tokenizer.vocab_size

@@ -27,7 +27,6 @@ class SDPAttention(Module):
         if self.masked == True:
             x = self.mask(x)
 
-        x = self.mask(x)
         # no mask
         x = self.softmax(x)
 
@@ -41,7 +40,7 @@ class SDPAttention(Module):
         return mat / torch.sqrt(torch.tensor(self.d_k))
     
     def mask(self, x):
-        tri_mask = (torch.triu(torch.ones(size=x.shape, dtype=torch.float), 1) * VERY_SMOL_NUM).to(self.device) * VERY_SMOL_NUM
+        tri_mask = (torch.triu(torch.ones(size=x.shape, dtype=torch.float), 1) * VERY_SMOL_NUM).to(self.device)
         x = x + tri_mask
         return x 
 

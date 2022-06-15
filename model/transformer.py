@@ -54,6 +54,7 @@ class EncoderBlock(Module):
         self.mha = MultiHeadAttention(mp)
         self.add_norm = AddNorm(mp)
         self.ff = TransformerFC(mp)
+        self.dropout = torch.nn.Dropout(0.1)
 
     def forward(self, x):
         assert x.shape[-1] == self.d_model
@@ -61,9 +62,11 @@ class EncoderBlock(Module):
         x_prev = x
         x = self.mha(*self.expand(x))
         x = self.add_norm(x_prev, x)
+        x = self.dropout(x)
         x_prev = x
         x = self.ff(x)
         x = self.add_norm(x_prev, x)
+        x = self.dropout(x)
         
         return x
     
@@ -96,8 +99,6 @@ class TransformerEmbedding(Module):
 
         self.d_model = mp.d_model 
 
-        print(size)
-        print(self.d_model)
         self.embedding = torch.nn.Embedding(size, self.d_model, padding_idx=3)
 
     def forward(self, x):
@@ -116,6 +117,7 @@ class DecoderBlock(Module):
         self.mha_2 = MultiHeadAttention(mp)
         self.add_norm = AddNorm(mp)
         self.ff = TransformerFC(mp)
+        self.dropout = torch.nn.Dropout(0.1)
 
     def forward(self, inputs):
 
@@ -129,13 +131,16 @@ class DecoderBlock(Module):
         x_prev = x
         x = self.mha_2(*self.expand(x))
         x = self.add_norm(x_prev, x)
+        x = self.dropout(x)
         x_prev = x
         Q = x
         x = self.mha_2(*self.expand_VK(x_e), Q)
         x = self.add_norm(x_prev, x)
+        x = self.dropout(x)
         x_prev = x
         x = self.ff(x)
         x = self.add_norm(x_prev, x)
+        x = self.dropout(x)
         
         assert x.shape[-1] == self.d_model
 
@@ -204,7 +209,6 @@ class Transformer(Module):
         )  
     
     def forward(self, _input, _output):
-
         # the input is a 1-d token vector
         assert len(_input.shape) == 2
         assert len(_output.shape) == 2

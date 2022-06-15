@@ -3,6 +3,7 @@ from utils.data import load_data
 from utils.preproc import TransformerDataset
 from model.transformer import Transformer
 from model.trainer import TransformerTrainer
+import torch
 
 """
 
@@ -35,12 +36,13 @@ mp = ModelParams(d_model=d_model,
     batch_size=batch_size
     )
 
-print(mp.batch_size)
+mp.device = 'cuda'
 
 td = TransformerDataset(mp)
 device = mp.device
 t = Transformer(mp).to(device)
 tr = TransformerTrainer(mp, t, td)
-#ev = TransformerEvaluator(mp, t, data)
 
-tr.test_train()
+tr.train()
+torch.save(t, 'model.pt')
+files.download('model.pt')
