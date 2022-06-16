@@ -129,3 +129,5 @@ dmypy.json
 .pyre/
 data/*
 !data/download_data.sh
+input.txt
+

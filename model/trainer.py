@@ -64,6 +64,59 @@ class TransformerTrainer:
     
     def save(self, epoch):
         torch.save(self.model, f'model_epoch{epoch}.pt')
+    
+    def _train(self):
+
+        running_loss = 0
+
+        for i, (train_example, label_example) in enumerate(tqdm(self.ds)):
+
+            try:
+                # training step
+                
+                x = train_example
+                y = label_example
+
+                y_shifted = y[:, 1:]
+                y_test = y_shifted
+                y = y[:, :-1]
+
+                # feed the outputs shifted right, but we later compute loss w/ non-shifted
+                y_pred = self.model(x, y)
+                y_pred_argmax = torch.argmax(y_pred, -1)
+
+                # resize everything for CEloss
+                y_pred = y_pred.view(-1, self.vocab_size)
+                y_shifted = y_shifted.ravel()
+                
+                self.optimizer.zero_grad()
+                loss = self.loss_fn(y_pred, y_shifted)
+                loss.backward()
+                self.optimizer.step()
+
+                running_loss += loss.item()
+
+                # code for setting good learning rate from paper
+                
+                # running loss
+                if i % 100 == 99:
+                    running_loss /= 100
+                    print(f'epoch {self.epoch} batch {i} loss: {running_loss}')
+                    #print(self.tokenizer.batch_decode(x)[0])
+                    #print(self.tokenizer.batch_decode(y_test)[0])
+                    #print(self.tokenizer.batch_decode(y_pred_argmax)[0])
+                    
+                    running_loss = 0
+
+                if i % self.val_interval == self.val_interval - 1:
+                    print('validating...')
+                    #self._validate()
+                    #self.save()
+            except RuntimeError as e:
+                print(e)
+        
+        
+    """
 
     def _train(self):
 
@@ -97,13 +150,7 @@ class TransformerTrainer:
                 running_loss += loss.item()
 
                 # code for setting good learning rate from paper
-                """
-                if i > 0:
-                    lr = math.pow(float(self.d_model), -0.5) * math.pow(float(i * 32), -0.5)
-                    for g in self.optimizer.param_groups:
-                        g['lr'] = lr
-                """
-            
+                
                 # running loss
                 if i % 100 == 99:
                     running_loss /= 100
@@ -160,3 +207,4 @@ class TransformerTrainer:
                 print(self.tokenizer.batch_decode(y)[0])
                 print(self.tokenizer.batch_decode(y_pred)[0])
                 #running_loss = 0
+    """
