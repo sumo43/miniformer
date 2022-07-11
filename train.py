@@ -46,3 +46,26 @@ tr = TransformerTrainer(mp, t, td)
 tr.train()
 torch.save(t, 'model.pt')
 files.download('model.pt')
+
+
+import torch
+
+"""
+    Note on dimensions: while the 2017 paper uses 1 set of keys-value pairs, this model uses m
+"""
+
+a = torch.tensor()
+
+def DotProductAtteention(q, K, V):
+    """ Dot−Product Attention on one query.
+    Args:
+    q: a vector with shape [ k ]
+    K: a matrix with shape [m, k ]
+    V: a matrix with shape [m, v ]
+    Returns:
+    y: a vector with shape [ v ]
+    """
+
+    logits = torch.einsum('k, mk -> m', K, q)
+    key_weights = torch.nn.Softmax(logits)
+    return torch.einsum('mv, m -> v', key_weights, V)

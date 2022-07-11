@@ -1,4 +1,3 @@
-
 #### Transformer PROS
 - scales well. https://arxiv.org/pdf/2205.06175.pdf
 - You can use it for a lot of stuff. Translation, vision transformer, latent space representations for other decoders
@@ -13,23 +12,6 @@
 D = 512, dimension of dense
 N = 6, Number of encoder and decoder blocks
 h = 8, amt of attn heads
-
-#### Encoder
-
-Input Embedding + Positional Encoding FastText
-
-Sub Layer 1:
-Multi Head Attention -> Add residual Connection -> Layer Norm
-
-Sub Layer 2:
-Feed Forward NN 512->512 -> Layer Norm
-
-#### Attention Mechanism
-
-
-
-
-
 
 
 

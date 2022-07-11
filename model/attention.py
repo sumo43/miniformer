@@ -1,93 +1,135 @@
-from torch.nn import Module
-from utils.general import VERY_SMOL_NUM
 import torch
 
+"""
+    Reference: Fast Transformer Decoding: One Write-Head is All You Need
+    Reference: Attention is all you need
+    these functions are just references. The actual code used is in model.py
+"""
 
-class SDPAttention(Module):
-    def __init__(self, mp, masked=False):
-        super().__init__()
+def DotProductAttention(q, K, V):
+    """ 
+    Regular DPA.
 
-        self.masked = masked
-        self.d_model = mp.d_model
-        self.d_v = mp.d_v
-        self.d_k = mp.d_k
+    Params:
+    m: Length of the input
+    k: key dimension
+    v: value dimension
+    d: embedding dimension (d_model)
+    h: number of heads
 
-        self.softmax = torch.nn.Softmax(dim=1)
-        self.device = mp.device
+    Args:
+    q: a vector with shape [k]
+    K: a matrix with shape [m, k]
+    V: a matrix with shape [m, v]
 
-    def forward(self, Q, K, V):
+    Returns:
+    y: a vector with shape [v]
+    """
 
-        assert Q.shape[-1] == self.d_k
-        assert K.shape[-1] == self.d_k
-        assert V.shape[-1] == self.d_v
-
-        x = torch.matmul(Q, K.mT)
-        x = self.scale(x)
-
-        if self.masked == True:
-            x = self.mask(x)
-
-        # no mask
-        x = self.softmax(x)
-
-        x = torch.matmul(x, V)
-
-        assert x.shape[-1] == self.d_k
-
-        return x
-
-    def scale(self, mat):
-        return mat / torch.sqrt(torch.tensor(self.d_k))
-    
-    def mask(self, x):
-        tri_mask = (torch.triu(torch.ones(size=x.shape, dtype=torch.float), 1) * VERY_SMOL_NUM).to(self.device)
-        x = x + tri_mask
-        return x 
+    logits = torch.einsum('k, mk -> m', K, q)
+    key_weights = torch.nn.Softmax(logits)
+    return torch.einsum('mv, m -> v', key_weights, V)
 
 
-class MultiHeadAttention(Module):
-    def __init__(self, mp, masked=False):
+def MultiHeadAttentionIncremental(
+    x,
+    K_prev,
+    V_prev,
+    P_q,
+    P_k,
+    P_v,
+    P_o):
 
-        super().__init__()
+    """ 
+    Incremental MHA for decoding. x comes from the encoder, therefore has 2 dims instead of 3.
+    this is the incremental version: K and V are concatenated and fed to the next step.
+    The concatenate step isn't mentioned in the original paper, but it makes sense:
+    each decoder step should have access to all previous steps, up to the first one 
 
-        d_k = 0
-        d_v = 0
-        d_model = 0
+    Params:
+    m: length of the input to the decoder
+    k: key dimension
+    v: value dimension
+    d: embedding dimension (d_model)
+    h: number of heads
+    b: batch dimension
 
-        self.d_model = mp.d_model
-        self.d_v = mp.d_v
-        self.d_k = mp.d_k
-        self.h = mp.h
-        self.device = mp.device
+    Args:
+    x: a vector with shape [b, d]
+    K_prev: a matrix with shape [b, h, m, k]
+    V_prev: a matrix with the shape [b, h, m, v]
+    P_q: a tensor with shape [h, d, k]
+    P_k: a tensor with shape [h, d, k]
+    P_v: a tensor with shape [h, d, v]
+    P_o: a tensor with shape [h, d, v]
 
-        # TODO make these each 2 weight
-        self.w_Q = [torch.nn.Linear(self.d_model, self.d_k).to(self.device) for i in range(self.h)]
-        self.w_K = [torch.nn.Linear(self.d_model, self.d_k).to(self.device) for i in range(self.h)]
-        self.w_V = [torch.nn.Linear(self.d_model, self.d_v).to(self.device) for i in range(self.h)]
-        self.w_O = torch.nn.Linear(self.d_model, self.d_k * self.h).to(self.device)
+    Returns : 
+    y: a vector with shape [b, d]
+    K_new: a matrix with shape [b, m+1, k]
+    V_new: a matrix with the shape [b, m+a, v]
+    """
 
-        self.SDPA = SDPAttention(mp, masked)
+    # compute q, K, V. Concat K and V
+    q = torch.einsum('d, hdk -> hk', x, P_q)
+    K_new = torch.concat([K_prev, torch.expand_dims(torch.einsum('bd, hdk -> bhk', M, P_k), 2)], 2)
+    V_new = torch.concat([V_prev, torch.expand_dims(torch.einsum('bd, hdv -> bhv', M, P_v), 2)], 2)
 
-    def forward(self, V, K, Q):
+    # perform attention along dimension h (heads)
+    logits = torch.einsum('hk, bhmk -> bhm', q, K_new)
+    key_weights = torch.nn.Softmax(logits)
+    o = torch.einsum('bhmv, hm -> bhv', key_weights, V_new)
 
-        assert Q.shape[-1] == self.d_model
-        assert K.shape[-1] == self.d_model
-        assert V.shape[-1] == self.d_model
+    # matmul with our linear layers at the end 
+    y = torch.einsum('bhv, hdv -> bd', o, P_o)
 
-        heads = []
+    return y, K_new, V_new
 
-        for i in range(self.h):
 
-            q_i = self.w_Q[i](Q)
-            k_i = self.w_K[i](K)
-            v_i = self.w_V[i](V)
+def MultiQueryAttentionIncremental(
+    x,
+    M,
+    P_q,
+    P_k,
+    P_v,
+    P_o):
+    """ 
+    Multi Query Attention: Like the above, but only the query has heads. 
+    P_v and P_k are shared across all the heads 
 
-            head = self.SDPA(q_i, k_i, v_i)
+    Params:
+    m: length of the input to the decoder
+    k: key dimension
+    v: value dimension
+    d: embedding dimension (d_model)
+    h: number of heads
+    b: batch dimension
 
-            heads.append(head)
+    Args:
+    x: a vector with shape [b, d]
+    K_prev: a matrix with shape [b, m, k]
+    V_prev: a matrix with the shape [b, m, v]
+    P_q: a tensor with shape [h, d, k]
+    P_k: a tensor with shape [h, d, k]
+    P_v: a tensor with shape [h, d, v]
+    P_o: a tensor with shape [h, d, v]
 
-        x = self.w_O(torch.concat(heads, -1))
+    Returns : 
+    y: a vector with shape [b, d]
+    K_new: a matrix with shape [b, m+1, k]
+    V_new: a matrix with the shape [b, m+a, v]
+    """
 
-        assert x.shape[-1] == self.d_model
+    # compute q, K, V. Concat K and V
+    q = torch.einsum('d, hdk -> hk', x, P_q)
+    K_new = torch.concat([K_prev, torch.expand_dims(torch.einsum('bd, dk -> bk', M, P_k), 2)], 2)
+    V_new = torch.concat([V_prev, torch.expand_dims(torch.einsum('bd, dv -> bv', M, P_v), 2)], 2)
 
-        return x
+    # perform attention along dimension h (heads)
+    logits = torch.einsum('hk, bmk -> bhm', q, K_new)
+    key_weights = torch.nn.Softmax(logits)
+    o = torch.einsum('bmv, hm -> bhv', key_weights, V_new)
+
+    # matmul with our linear layers at the end 
+    y = torch.einsum('bhv, hdv -> bd', o, P_o)
+
+    return y, K_new, V_new

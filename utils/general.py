@@ -42,6 +42,10 @@ class PositionalEncoder(nn.Module):
 
         return x
 
+
+
+
+
 # these parameters are all you need. we pass this class to various functions
 class ModelParams():
     def __init__(self, 
