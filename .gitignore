@@ -131,3 +131,5 @@ data/*
 !data/download_data.sh
 input.txt
 
+.ipynb_checkpoints
+.DS_Store
