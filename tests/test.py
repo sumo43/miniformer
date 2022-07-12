@@ -1,10 +1,9 @@
 import torch
-
-from model.model import Config, Transformer
+from miniformer.model import Config, Transformer
 
 """
-Series of tests for all of the individual classes that make up the model
-Mostly to ensure that the shapes of everything are correct (Also have assert statements)
+Tests to make sure shapes and stuff are correct
+These probably won't catch architecture bugs that may prevent it from converging
 """
 
 # default params
@@ -12,9 +11,6 @@ config = Config()
 t = Transformer(config)
 
 test_x = torch.ones((1, 5)).type(torch.IntTensor)
-print(test_x)
-
-t(test_x)
 
 """
 
