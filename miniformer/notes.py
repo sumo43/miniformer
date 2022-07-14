@@ -1,11 +1,12 @@
 import torch
+from einops import einops
 
 """
     Reference: Fast Transformer Decoding: One Write-Head is All You Need
     Reference: Attention is all you need
     Reference: Visual Transformer
     
-    these functions are just references. The actual code used is in model.py
+    these functions are references. The actual code used is in model.py
 """
 
 def DotProductAttention(q, K, V):

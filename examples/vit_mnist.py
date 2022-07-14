@@ -4,15 +4,27 @@ from utils.preproc import preprocess_data, postprocess_data, to_string, get_voca
 from model.transformer import Transformer
 import torch
 
-"""
 
-Eval 
-For now, we take a sentence in english, and translate it word-by-word into spanish until it hits the max seq length limit
-TODO add validation set
-TODO add a way to keep the vocab as a separate file and load it into memory for translation
 
 """
+ViT with classifier head to classify MNIST.
+"""
 
+vit_config = {
+    # model parameters
+    'm' : None,
+    'k' : 32, # key dimension size
+    'v' : 32, # value dimension size
+    'd' : 128, # dimension of hidden state between blocks
+    'h' : 4, # number of heads
+    'd_ff' : 128, # size of fully-connected layer
+    'n_encoders' : 2, # number of encoder layers
+    'n_decoders' : 2, # number of decoder layers
+    'max_seq_length' : 1024, # max m
+    # hyperparameters for training
+    'lr' : 1e-5, # use lr scheduler later
+    'vocab_size': 100
+}
 
 d_model = 128
 h= 4

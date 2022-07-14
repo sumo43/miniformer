@@ -8,12 +8,11 @@ import time
 from einops.einops import rearrange
 
 """
-Notes/pseudocode about writing attentions with einops in attention.py. 
+Notes/pseudocode about writing attentions with einops in notes.py. 
 I only implement decoder-only and encoder-only architectures, 
-since they are used in GPT and ViT. Code heavily inspired by karpathy/mingpt
+since they are used in GPT and ViT. Code inspired by karpathy/mingpt
 Maybe later ill make a full transformer for translation and stuff.
 """
-
 
 class Config():
     # model parameters
@@ -42,7 +41,7 @@ class Config():
     vocab_size = 30000 # shared vocab, if doing NLP
     is_decoder = False
 
-    def init(self, **kwargs): 
+    def __init__(self, **kwargs): 
         self.__dict__.update(kwargs)
 
 
@@ -99,7 +98,7 @@ class MHA(torch.nn.Module):
         self.P_k = torch.nn.init.kaiming_uniform_(torch.empty(config.h, config.d, config.k))
         self.P_v = torch.nn.init.kaiming_uniform_(torch.empty(config.h, config.d, config.v))
         self.P_o = torch.nn.init.kaiming_uniform_(torch.empty(config.h, config.d, config.v))
-        self.register_buffer('mask', torch.tril(torch.ones((config.d, config.d)))).view(1, 1, config.d, config.d)
+        self.register_buffer('triu_mask', torch.tril(torch.ones((config.d, config.d))).view(1, 1, config.d, config.d))
 
     def forward(x):
         # linear layers before attention
@@ -119,7 +118,7 @@ class MHA(torch.nn.Module):
     @staticmethod
     def mask(self, x):
         seq_length = x.shape[-1]
-        return x.masked_fill(self.mask[:, :, :seq_length, :seq_length], float('-inf') )
+        return x.masked_fill(self.triu_mask[:, :, :seq_length, :seq_length], float('-inf') )
 
 
 class Block(Module):
@@ -152,8 +151,8 @@ class Block(Module):
 class Transformer(Module):
     def __init__(self, config):
         super().__init__()
-        self.tok_embedding = torch.nn.Embedding(config.vocab_size, config.d, padding_idx = 3)
-        self.pos_encoding = PositionalEncoder(config)
+        self.input_embedding = torch.nn.Embedding(config.vocab_size, config.d, padding_idx = 3)
+        self.pos_encoding = torch.nn.Embedding(config.max_seq_length, 1)
         self.encoder = nn.Sequential(
             *[Block(config, mask=True) for i in range(config.n_encoders)])
         self.device = config.device
@@ -161,14 +160,14 @@ class Transformer(Module):
             FeedForward(config),
             torch.nn.Linear(config.d, config.vocab_size)
         )  
-        self.dropout = config.p_drop
-            
+        self.dropout = torch.nn.Dropout(config.dropout)
+        self.pos = torch.arange(0, config.max_seq_length, dtype=torch.long, device=config.device).unsqueeze(0) # shape (1, t)
+ 
     def forward(self, _input):
         # use learned positional encodings
-        pos = torch.arange(0, d, dtype=torch.long, device=device).unsqueeze(0) # shape (1, t)
-        pos_emb = self.pos_encoding(pos)
+        pos_emb = self.pos_encoding(self.pos)
         _input = self.input_embedding(_input)
-        _input = self.dropout(_input + pos_emb)
+        #_input = self.dropout(_input + pos_emb[:, :seq_length])
         encoder_output = self.encoder(_input)
         # The head can be modified for different purposes.
         # for example, VIT can use a classifier head instead. 
@@ -188,6 +187,7 @@ class ViT(Module):
         pos_emb = self.pos_encoding(pos)
         _input = self.input_embedding(_input)
         _input = self.dropout(_input + pos_emb)
+        print(_input.shape)
         encoder_output = self.encoder(_input)
         # The head can be modified for different purposes.
         # for example, VIT can use a classifier head instead. 

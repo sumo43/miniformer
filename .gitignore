@@ -133,3 +133,5 @@ input.txt
 
 .ipynb_checkpoints
 .DS_Store
+weights/
+data/

@@ -1,16 +1,73 @@
 import torch
 from miniformer.model import Config, Transformer
+from time import sleep
 
 """
 Tests to make sure shapes and stuff are correct
 These probably won't catch architecture bugs that may prevent it from converging
 """
 
+test_config = {
+    # model parameters
+    'm' : None,
+    'k' : 32, # key dimension size
+    'v' : 32, # value dimension size
+    'd' : 128, # dimension of hidden state between blocks
+    'h' : 4, # number of heads
+    'd_ff' : 128, # size of fully-connected layer
+    'n_encoders' : 2, # number of encoder layers
+    'n_decoders' : 2, # number of decoder layers
+    'max_seq_length' : 1024, # max m
+    # hyperparameters for training
+    'lr' : 1e-5, # use lr scheduler later
+    'vocab_size': 100
+}
+
 # default params
-config = Config()
+config = Config(**test_config)
 t = Transformer(config)
 
-test_x = torch.ones((1, 5)).type(torch.IntTensor)
+
+optimizer = torch.optim.SGD(t.parameters(), lr=config.lr)
+loss= torch.nn.CrossEntropyLoss()
+
+"""
+
+for i in range(1000):
+
+print(torch.argmax(model(test_x), -1))
+"""
+
+# sort_dataset: x is [1, 2, 3, 4, 5], y is [5, 4, 3, 2, 1]
+x = []
+y = []
+for i in range(500):
+    i = torch.randint(0, 9, (1, 5)).type(torch.LongTensor)
+    o = i * 2
+
+
+    print(i.shape)
+    print(o.shape)
+    x.append(i)
+    y.append(o)
+
+for i in range(1000):
+    for j in range(len(x)):
+        x_i = x[j]
+        y_i = y[j]
+        loss.zero_grad()
+        y_pred = t(x_i)
+
+        print(x_i)
+        print(torch.argmax(y_pred, -1))
+
+        l = loss(y_pred.reshape(-1, 100), y_i.reshape(-1,))
+        print(l.item())
+        l.backward()
+        optimizer.step()
+
+
+
 
 """
 
