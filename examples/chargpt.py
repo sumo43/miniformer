@@ -8,7 +8,7 @@ from miniformer.trainer import Trainer
 GPT with character-level embeddings to generate shakespeare.
 """
 
-DATA_FILE = os.path.join('..', 'data', 'minishakespear.txt')
+DATA_FILE = os.path.join('..', 'data', 'input.txt')
 SPECIAL_TOKEN = 0 # can use this for EOS, padding, etc...
 
 chargpt_config = {
@@ -60,7 +60,7 @@ class CharDataset:
 
 config = Config(**chargpt_config)
 dataset = CharDataset(DATA_FILE, config)
-model = Transformer(config)
+model = Transformer(config).to(config.device)
 trainer = Trainer(dataset, config)
 trainer.train(model, num_epochs=10, batch_size=config.batch_size)
 
