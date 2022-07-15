@@ -25,6 +25,7 @@ setup(name='miniformer',
             "pytest",
             "torch~=1.11.0",
             "tqdm",
+            "einops"
         ],
       },
       include_package_data=True)

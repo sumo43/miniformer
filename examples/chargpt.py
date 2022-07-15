@@ -37,8 +37,8 @@ class CharDataset:
         self.data = self.data.lower() # lowecase only
         # count the occurrences of each char and sort them
         chars = sorted(Counter(list(self.data)).items(), key=lambda a: a[1], reverse=True)
-        # make space for SPECIAL_TOKEN at 0
         self.ctoi = {c[0]: i+1 for i,c in enumerate(chars)}
+        self.ctoi['<S>'] = 0 # make space for SPECIAL_TOKEN at 0
         self.config.vocab_size = len(self.ctoi)
         self.itoc = {v:k for k, v in self.ctoi.items()}
 
