@@ -6,6 +6,7 @@ import cv2
 import math
 import time
 from einops.einops import rearrange
+import einops
 
 """
 Notes/pseudocode about writing attentions with einops in notes.py. 
@@ -94,28 +95,29 @@ class MHA(torch.nn.Module):
 
     def __init__(self, config, mask=False):
         super().__init__()
-        self.P_q = torch.nn.init.kaiming_uniform_(torch.empty(config.h, config.d, config.k))
-        self.P_k = torch.nn.init.kaiming_uniform_(torch.empty(config.h, config.d, config.k))
-        self.P_v = torch.nn.init.kaiming_uniform_(torch.empty(config.h, config.d, config.v))
-        self.P_o = torch.nn.init.kaiming_uniform_(torch.empty(config.h, config.d, config.v))
+        self.config = config
+        self.P_q = torch.nn.init.normal_(torch.empty(config.h, config.d, config.k, requires_grad=True))
+        self.P_k = torch.nn.init.normal_(torch.empty(config.h, config.d, config.k, requires_grad=True))
+        self.P_v = torch.nn.init.normal_(torch.empty(config.h, config.d, config.v, requires_grad=True))
+        self.P_o = torch.nn.init.normal_(torch.empty(config.h, config.d, config.v, requires_grad=True))
         self.register_buffer('triu_mask', torch.tril(torch.ones((config.d, config.d))).view(1, 1, config.d, config.d))
+        self.softmax = torch.nn.Softmax(dim=-1)
 
-    def forward(x):
+    def forward(self, x):
         # linear layers before attention
-        Q = torch.einsum('bmd, hdk -> bhmk', x, P_q)
-        K = torch.einsum('bmd, hdk -> bhmk', x, P_k)
-        V = torch.einsum('bmd, hdv -> bhmv', x, P_v)
+        Q = torch.einsum('bmd, hdk -> bhmk', x, self.P_q)
+        K = torch.einsum('bmd, hdk -> bhmk', x, self.P_k)
+        V = torch.einsum('bmd, hdv -> bhmv', x, self.P_v)
         # attention
-        logits = torch.einsum('bhmk, bhmk -> bhmm', Q, K)
-        logits = logits / torch.sqrt(config.k)
+        logits = torch.einsum('bhmk, bhnk -> bhmn', Q, K)
+        logits = logits / torch.sqrt(torch.tensor(self.config.k))
         logits = self.mask(logits)
-        key_weights = torch.nn.Softmax(logits, dim=-1)
+        key_weights = self.softmax(logits)
         o = torch.einsum('bhmm, bhmv -> bhmv', key_weights, V)
         # linear layer after attention
-        y = torch.einsum('bmhv, hdv -> bmd', o, P_o)
+        y = torch.einsum('bhmv, hdv -> bmd', o, self.P_o)
         return y
 
-    @staticmethod
     def mask(self, x):
         seq_length = x.shape[-1]
         return x.masked_fill(self.triu_mask[:, :, :seq_length, :seq_length], float('-inf') )
@@ -131,44 +133,51 @@ class Block(Module):
     def __init__(self, config, mask=False):
         super().__init__()
         self.mha = MHA(config, mask=mask)
-        self.add_norm = AddNorm(config)
+        self.add_norm_1 = AddNorm(config)
+        self.add_norm_2 = AddNorm(config)
         self.ff = FeedForward(config)
-        self.dropout = torch.nn.Dropout(0.1)
+        self.dropout = torch.nn.Dropout(config.dropout)
 
     def forward(self, x):
         x_prev = x
+        x = self.mha(x)
         if self.dropout:
             x = self.dropout(x) # dropout after attention
-        x = self.add_norm(x_prev, x)
+        x = self.add_norm_1(x_prev, x)
         x_prev = x
         x = self.ff(x)
         if self.dropout:
             x = self.dropout(x)
-        x = self.add_norm(x_prev, x)
+        x = self.add_norm_2(x_prev, x)
         return x
 
 
 class Transformer(Module):
     def __init__(self, config):
         super().__init__()
-        self.input_embedding = torch.nn.Embedding(config.vocab_size, config.d, padding_idx = 3)
-        self.pos_encoding = torch.nn.Embedding(config.max_seq_length, 1)
+        self.input_embedding = torch.nn.Embedding(config.vocab_size, config.d)
+        self.pos_embedding = torch.nn.Embedding(config.max_seq_length, config.d)
+        self.config = config
         self.encoder = nn.Sequential(
-            *[Block(config, mask=True) for i in range(config.n_encoders)])
+            *[Block(config, mask=True) for i in range(config.n_decoders)])
         self.device = config.device
         self.head = nn.Sequential(
-            FeedForward(config),
-            torch.nn.Linear(config.d, config.vocab_size)
+            torch.nn.Linear(config.d, config.d * 4),
+            torch.nn.Linear(config.d * 4, config.vocab_size)
         )  
         self.dropout = torch.nn.Dropout(config.dropout)
-        self.pos = torch.arange(0, config.max_seq_length, dtype=torch.long, device=config.device).unsqueeze(0) # shape (1, t)
- 
+        self.ln = torch.nn.LayerNorm(config.d)
+         
     def forward(self, _input):
+        pos = torch.arange(0, _input.shape[-1], dtype=torch.long, device=self.config.device).unsqueeze(0) # shape (1, t)
         # use learned positional encodings
-        pos_emb = self.pos_encoding(self.pos)
-        _input = self.input_embedding(_input)
-        #_input = self.dropout(_input + pos_emb[:, :seq_length])
+        seq_length = _input.shape[-1]
+        #pos_emb = self.pos_encoding(self.pos)
+        input_embeddings = self.input_embedding(_input)
+        pos_embeddings = self.pos_embedding(pos)
+        _input = self.dropout(input_embeddings + pos_embeddings)
         encoder_output = self.encoder(_input)
+        encoder_output = self.ln(encoder_output)
         # The head can be modified for different purposes.
         # for example, VIT can use a classifier head instead. 
         _output = self.head(encoder_output)
