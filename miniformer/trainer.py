@@ -8,15 +8,18 @@ class Trainer:
         self.dataset = dataset
 
     def train(self, model, **kwargs):
-        optimizer = torch.optim.Adam(model.parameters(), lr=self.config.lr)
+        optimizer = torch.optim.Adam(model.parameters(), lr=self.config.lr, betas=(0.9, 0.98))
         loss_fn = torch.nn.CrossEntropyLoss()
         running_loss = 0
+        model.train()
         # this works for chargpt, but needs to be generalized for models that need both x, y as inputs, like translators
         for epoch in range(self.config.epochs):
             for i, (x, y) in enumerate(self.dataloader):
+                x = x.to(self.config.device)
+                y = y.to(self.config.device)
                 y_pred = model(x)
                 y_pred_argmax = torch.argmax(y_pred, -1)
-                optimizer.zero_grad()
+                model.zero_grad(set_to_none=True)
                 loss = loss_fn(y_pred.view(-1, self.config.vocab_size), y.view(-1,))
                 loss.backward()
                 optimizer.step()

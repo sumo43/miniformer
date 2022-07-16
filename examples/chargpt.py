@@ -8,7 +8,7 @@ from miniformer.trainer import Trainer
 GPT with character-level embeddings to generate shakespeare.
 """
 
-DATA_FILE = os.path.join('..', 'data', 'minishakespear.txt')
+DATA_FILE = os.path.join('..', 'data', 'input.txt')
 SPECIAL_TOKEN = 0 # can use this for EOS, padding, etc...
 
 chargpt_config = {
@@ -26,7 +26,7 @@ chargpt_config = {
     'lr' : 4e-4, # use lr scheduler later
     'vocab_size': 30,
     'epochs': 10,
-    'batch_size': 16
+    'batch_size': 64
 
 }
 
@@ -48,7 +48,7 @@ class CharDataset:
         return self.itoc[x]
     
     def __getitem__(self, idx):
-        data = torch.Tensor(list(map(self.get_ctoi, self.data[idx:idx+config.max_seq_length+1])), device=self.config.device)\
+        data = torch.tensor(list(map(self.get_ctoi, self.data[idx:idx+config.max_seq_length+1])))\
             .type(torch.LongTensor)
         x = data[:-1]
         y = data[1:]

@@ -96,10 +96,10 @@ class MHA(torch.nn.Module):
     def __init__(self, config, mask=False):
         super().__init__()
         self.config = config
-        self.P_q = torch.nn.init.normal_(torch.empty(config.h, config.d, config.k, requires_grad=True))
-        self.P_k = torch.nn.init.normal_(torch.empty(config.h, config.d, config.k, requires_grad=True))
-        self.P_v = torch.nn.init.normal_(torch.empty(config.h, config.d, config.v, requires_grad=True))
-        self.P_o = torch.nn.init.normal_(torch.empty(config.h, config.d, config.v, requires_grad=True))
+        self.P_q = torch.nn.init.normal_(torch.empty(config.h, config.d, config.k, requires_grad=True, device=config.device))
+        self.P_k = torch.nn.init.normal_(torch.empty(config.h, config.d, config.k, requires_grad=True, device=config.device))
+        self.P_v = torch.nn.init.normal_(torch.empty(config.h, config.d, config.v, requires_grad=True, device=config.device))
+        self.P_o = torch.nn.init.normal_(torch.empty(config.h, config.d, config.v, requires_grad=True, device=config.device))
         self.register_buffer('triu_mask', torch.tril(torch.ones((config.d, config.d))).view(1, 1, config.d, config.d))
         self.softmax = torch.nn.Softmax(dim=-1)
 
@@ -111,7 +111,7 @@ class MHA(torch.nn.Module):
         # attention
         logits = torch.einsum('bhmk, bhnk -> bhmn', Q, K)
         logits = logits / torch.sqrt(torch.tensor(self.config.k))
-        logits = self.mask(logits)
+        #logits = self.mask(logits)
         key_weights = self.softmax(logits)
         o = torch.einsum('bhmm, bhmv -> bhmv', key_weights, V)
         # linear layer after attention
@@ -119,9 +119,7 @@ class MHA(torch.nn.Module):
         return y
 
     def mask(self, x):
-        seq_length = x.shape[-1]
-        return x.masked_fill(self.triu_mask[:, :, :seq_length, :seq_length], float('-inf') )
-
+        return x + (self.triu_mask * -128941875198751875.)
 
 class Block(Module):
     """
@@ -162,20 +160,21 @@ class Transformer(Module):
             *[Block(config, mask=True) for i in range(config.n_decoders)])
         self.device = config.device
         self.head = nn.Sequential(
-            torch.nn.Linear(config.d, config.d * 4),
-            torch.nn.Linear(config.d * 4, config.vocab_size)
+            torch.nn.Linear(config.d, config.vocab_size)
         )  
         self.dropout = torch.nn.Dropout(config.dropout)
         self.ln = torch.nn.LayerNorm(config.d)
          
     def forward(self, _input):
         pos = torch.arange(0, _input.shape[-1], dtype=torch.long, device=self.config.device).unsqueeze(0) # shape (1, t)
+        print(pos.shape)
         # use learned positional encodings
         seq_length = _input.shape[-1]
         #pos_emb = self.pos_encoding(self.pos)
         input_embeddings = self.input_embedding(_input)
         pos_embeddings = self.pos_embedding(pos)
-        _input = self.dropout(input_embeddings + pos_embeddings)
+   
+        _input = self.dropout(input_embeddings + pos_embeddings.permute(0, 2, 1))
         encoder_output = self.encoder(_input)
         encoder_output = self.ln(encoder_output)
         # The head can be modified for different purposes.

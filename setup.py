@@ -17,7 +17,7 @@ setup(name='miniformer',
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License"
       ],
-      install_requires=['numpy', 'requests', 'pillow'],
+      install_requires=['numpy', 'requests', 'pillow', 'einops'],
       python_requires='>=3.8',
       extras_require={
         'gpu': ["pyopencl", "six"],
