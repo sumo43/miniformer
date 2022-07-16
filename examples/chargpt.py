@@ -26,7 +26,7 @@ chargpt_config = {
     'lr' : 4e-5, # use lr scheduler later
     'vocab_size': 30,
     'epochs': 10,
-    'batch_size': 32
+    'batch_size': 16
 
 }
 
