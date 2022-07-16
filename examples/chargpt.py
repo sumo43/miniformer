@@ -23,10 +23,10 @@ chargpt_config = {
     'n_decoders' : 4, # number of decoder layers
     'max_seq_length' : 128, # max m
     # hyperparameters for training
-    'lr' : 4e-4, # use lr scheduler later
+    'lr' : 1e-3, # use lr scheduler later
     'vocab_size': 39,
     'epochs': 10,
-    'batch_size': 32
+    'batch_size': 8
 }
 
 class CharDataset:
