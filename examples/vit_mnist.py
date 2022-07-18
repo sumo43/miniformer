@@ -2,7 +2,7 @@ import torch
 import os
 from collections import Counter
 from miniformer.model import ViT, Config
-from miniformer.trainer import Trainer
+from miniformer.trainer import ViTTrainer
 import torchvision
 
 """
@@ -36,5 +36,5 @@ dataloader = torch.utils.data.DataLoader(dataset, batch_size=config.batch_size, 
 
 model = ViT(config)
 model = model.to(config.device)
-trainer = VitTrainer(dataset, config)
+trainer = ViTTrainer(dataset, config)
 trainer.train(model, num_epochs=10, batch_size=config.batch_size)
