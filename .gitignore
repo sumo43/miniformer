@@ -137,4 +137,5 @@ weights/
 data/*.txt
 !data/.gitkeep
 !data/*sh
+examples/*pt
 
