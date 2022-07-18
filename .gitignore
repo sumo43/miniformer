@@ -134,7 +134,7 @@ input.txt
 .ipynb_checkpoints
 .DS_Store
 weights/
-data/*.txt
+data/*
 !data/.gitkeep
 !data/*sh
 examples/*pt
