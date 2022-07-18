@@ -15,6 +15,7 @@ class Trainer:
         # this works for chargpt, but needs to be generalized for models that need both x, y as inputs, like translators
         for epoch in range(self.config.epochs):
             for i, (x, y) in enumerate(self.dataloader):
+                print(i)
                 x = x.to(self.config.device)
                 y = y.to(self.config.device)
                 y_pred = model(x)
@@ -22,24 +23,21 @@ class Trainer:
                 model.zero_grad(set_to_none=True)
                 loss = loss_fn(y_pred.view(-1, self.config.vocab_size), y.view(-1,))
                 loss.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 0.1)
                 optimizer.step()
                 running_loss += loss.item()
-                # running loss
-                if i % 50 == 49:
-                    running_loss /= 50
-                    sy = ''
-                    sy_pred = ''
-                    print(f'epoch {epoch} batch {i} loss: {running_loss}')
-                    for k in list(map(self.dataset.get_itoc, [int(j) for j in y[0]])):
-                        sy += k
-                    for k in list(map(self.dataset.get_itoc, [int(j) for j in y_pred_argmax[0]])):
-                        sy_pred += k
-                    print('---------------------------------------------------') 
-                    print(sy)
-                    print('---------------------------------------------------')
+                print(f'epoch {epoch} batch {i} loss: {loss.item()}')
+                sy = ''
+                sy_pred = ''
 
-                    print(sy_pred)
-                    running_loss = 0
+                for k in list(map(self.dataset.get_itoc, [int(j) for j in y[0]])):
+                    sy += k
+                for k in list(map(self.dataset.get_itoc, [int(j) for j in y_pred_argmax[0]])):
+                    sy_pred += k
+                print('---------------------------------------------------') 
+                print(sy)
+                print(sy_pred)
+                print('---------------------------------------------------')
                 # validation step - TODO make better
                 #if i % 500 == 499:
                 #    str = self.complete(model, "ROMEO:", 128)
@@ -48,14 +46,19 @@ class Trainer:
                 #print(self.tokenizer.batch_decode(x)[0])
                 #print(self.tokenizer.batch_decode(y_test)[0])
                 #print(self.tokenizer.batch_decode(y_pred_argmax)[0])
+                if i % 1000 == 0:
+                    torch.save(model.state_dict(), f'chargpt_iter{i}.pt')
                 
-            model.save(os.path.join(WEIGHTS_DICT, f'chargpt_epoch{epoch}.pt'))
+                #self.complete(model, 'ROMEO:', 128)
+
+
+                
         
     def complete(self, model, _start, length):
         _in = torch.Tensor(list(map(self.dataset.get_ctoi, _start.lower()))) \
         .type(torch.LongTensor) \
         .to(self.config.device) \
-        .unsqueeze(0)
+        .unsqueeze(0)   
 
         for i in range(length):
             _out = torch.argmax(model(_in[:, :self.config.max_seq_length]), -1)[-1:]

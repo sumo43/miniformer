@@ -9,25 +9,21 @@ GPT with character-level embeddings to generate shakespeare.
 """
 
 DATA_FILE = os.path.join('..', 'data', 'input.txt')
-SPECIAL_TOKEN = 0 # can use this for EOS, padding, etc...
 
 chargpt_config = {
-    # model parameters. This may be the smallest viable language model possible.
+    # model parameters. same as mingpt's gpt-mini config
     'm' : None,
-    'k' : 32, # key dimension size
-    'v' : 32, # value dimension size
-    'd' : 128, # dimension of hidden state between blocks
-    'h' : 4, # number of heads
-    'd_ff' : 128, # size of fully-connected layer
-    'n_encoders' : 4, # number of encoder layers
-    'n_decoders' : 4, # number of decoder layers
+    'k' : 64, # key dimension size
+    'v' : 64, # value dimension size
+    'd' : 384, # dimension of hidden state between blocks
+    'h' : 6, # number of heads
+    'n_encoders' : 6, # number of encoder layers
+    'n_decoders' : 6, # number of decoder layers
     'max_seq_length' : 128, # max m
     # hyperparameters for training
     'lr' : 4e-4, # use lr scheduler later
-    'vocab_size': 30,
     'epochs': 10,
     'batch_size': 64
-
 }
 
 class CharDataset:
@@ -48,8 +44,7 @@ class CharDataset:
         return self.itoc[x]
     
     def __getitem__(self, idx):
-        data = torch.tensor(list(map(self.get_ctoi, self.data[idx:idx+config.max_seq_length+1])))\
-            .type(torch.LongTensor)
+        data = torch.tensor(list(map(self.get_ctoi, self.data[idx:idx+config.max_seq_length+1])), dtype=torch.long)
         x = data[:-1]
         y = data[1:]
         return x, y
@@ -59,7 +54,9 @@ class CharDataset:
 
 config = Config(**chargpt_config)
 dataset = CharDataset(DATA_FILE, config)
-model = Transformer(config).to(config.device)
+model = Transformer(config)
+model.load_state_dict(torch.load('chargpt_iter16000.pt', map_location=torch.device('cpu')))
+model = model.to(config.device)
 trainer = Trainer(dataset, config)
 trainer.train(model, num_epochs=10, batch_size=config.batch_size)
 
