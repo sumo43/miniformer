@@ -26,5 +26,5 @@ python3 setup.py develop
 * [ViT Paper](https://arxiv.org/pdf/2010.11929.pdf)
 
 ### Links
-[karpathy/minGPT](https://github.com/karpathy/mingpt)
-[PyTorch transformer tutorial](https://pytorch.org/tutorials/beginner/transformer_tutorial.html)
+* [karpathy/minGPT](https://github.com/karpathy/mingpt)
+* [PyTorch transformer tutorial](https://pytorch.org/tutorials/beginner/transformer_tutorial.html)
