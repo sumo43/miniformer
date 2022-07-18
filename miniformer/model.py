@@ -63,7 +63,7 @@ class MHA(nn.Module):
     Protip: Don't use einops... hard to debug
     """
 
-    def __init__(self, config, mask):
+    def __init__(self, config, mask=False):
         super().__init__()
         # key, query, value projections for all heads, but in a batch
         self.l1 = nn.Linear(config.d, 3 * config.d)
@@ -77,6 +77,7 @@ class MHA(nn.Module):
         self.d = config.d
         self.h = config.h
         self.config = config
+        self.mask = mask
 
     def forward(self, x):
         config = self.config
@@ -89,7 +90,8 @@ class MHA(nn.Module):
         v = v.view(config.batch_size, T, config.h, config.v).transpose(2, 1)
         logits = torch.einsum('bhmk, bhnk -> bhmn', q, k)
         logits = logits / torch.sqrt(torch.tensor(self.config.k))
-        att = logits.masked_fill(self.bias[:,:,:T,:T] == 0, float('-inf'))
+        if self.mask:
+            att = logits.masked_fill(self.bias[:,:,:T,:T] == 0, float('-inf'))
         att = F.softmax(att, dim=-1)
         att = self.attn_dropout(att)
         y = torch.einsum('bhmm, bhmv -> bhmv', att, v)
@@ -156,19 +158,45 @@ class Transformer(Module):
 class ViT(Module):
     def __init__(self, config):
         super().__init__()
-        # TODO add image tokenizer. Maybe even move the embedding stuff out of Transformer class
-        self.forward = None
-        self.dropout = config.p_drop
-            
+        self.config = config
+        self.device = config.device
+        self.out_size = config.vocab_size
+        patch_size = (4, 4)
+        flat_patch_size = 16
+        self.learnable_patch = torch.nn.Parameter(torch.randn(4 * 4,))
+        self.pos_embedding = torch.nn.Embedding(config.max_seq_length, config.d)
+        self.patch_embedding = torch.nn.Linear(flat_patch_size, config.d)
+        self.encoder = nn.Sequential(
+            *[Block(config, mask=False) for i in range(config.n_decoders)])
+        self.head = nn.Sequential(
+            torch.nn.Linear(config.d, config.d * 4),
+            torch.nn.Linear(config.d * 4, config.d),
+            torch.nn.Linear(config.d, self.out_size)
+        )  
+        self.dropout = torch.nn.Dropout(config.dropout)
+        self.ln = torch.nn.LayerNorm(config.d)
+         
     def forward(self, _input):
-        # use learned positional encodings
-        pos = torch.arange(0, d, dtype=torch.long, device=device).unsqueeze(0) # shape (1, t)
-        pos_emb = self.pos_encoding(pos)
-        _input = self.input_embedding(_input)
-        _input = self.dropout(_input + pos_emb)
-        print(_input.shape)
+        pos = torch.arange(0, _input.shape[-1], dtype=torch.long, device=self.config.device).unsqueeze(0) # shape (1, t)
+        # encode the input as a bunch of flattened patches (last dim)
+        # then append the learnable patch at zero-index. now we have a nice even seq length
+        _input = torch.cat([self.learnable_patch, self.to_patches(_input)], dim=-1)         
+        input_embeddings = self.patch_embedding(_input) # -> (b, l_seq, d_model)
+        pos_emb = self.pos_encoding(self.pos)
+        pos_embeddings = self.pos_embedding(pos)
+        _input = self.dropout(input_embeddings + pos_embeddings)
         encoder_output = self.encoder(_input)
-        # The head can be modified for different purposes.
-        # for example, VIT can use a classifier head instead. 
+        encoder_output = self.ln(encoder_output)
         _output = self.head(encoder_output)
         return _output
+    
+    @staticmethod
+    def to_patches(arr):
+        # b, 28, 28,
+        b_dim = config.batch_size
+        img = torchvision.transforms.ToTensor()(img)
+        img = torch.nn.Unfold((4, 4), stride=4)(img).view(config.batch_size, 4, 4, 49)
+        img = img.transpose(3, 1)
+        img = img.transpose(2, 3)
+        img = img.view(config.batch_size, 49, -1)
+        return img
