@@ -14,15 +14,15 @@ DATA_FILE = os.path.join('..', 'data', 'input.txt')
 vit_config = {
     # model parameters. same as mingpt's gpt-mini config
     'm' : None,
-    'k' : 64, # key dimension size
-    'v' : 64, # value dimension size
-    'd' : 384, # dimension of hidden state between blocks
-    'h' : 6, # number of heads
-    'n_encoders' : 6, # number of encoder layers
-    'n_decoders' : 6, # number of decoder layers
+    'k' : 32, # key dimension size
+    'v' : 32, # value dimension size
+    'd' : 128, # dimension of hidden state between blocks
+    'h' : 4, # number of heads
+    'n_encoders' : 4, # number of encoder layers
+    'n_decoders' : 4, # number of decoder layers
     'max_seq_length' : 128, # max m
     # hyperparameters for training
-    'lr' : 4e-4, # use lr scheduler later
+    'lr' : 1e-3, # use lr scheduler later
     'epochs': 10,
     'batch_size': 64,
     'n_threads': 4,
