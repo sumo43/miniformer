@@ -28,3 +28,4 @@ python3 setup.py develop
 ### Links
 * [karpathy/minGPT](https://github.com/karpathy/mingpt)
 * [PyTorch transformer tutorial](https://pytorch.org/tutorials/beginner/transformer_tutorial.html)
+* [lucidrains vit-pytorch](https://github.com/lucidrains/vit-pytorch)
