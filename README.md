@@ -15,10 +15,40 @@ python3 setup.py develop
 ### Examples
 
 #### ```chargpt```
-  * Shakespeare text generation with decoder-only transformer. Benchmark taken from ```karpathy/mingpt```
+  * Shakespeare text generation with decoder-only transformer. dataset taken from ```karpathy/mingpt```
+```
+*PROMPT*: O God, O God!
+
+*GENERATED TEXT*:
+
+KING RICHAM:
+That thou art thus.
+
+KING LEWIS XI:
+It is no more shall have teach'd me in
+The grace! to my wrongether's death, if you must do that?
+
+KATHARINA:
+Twas by you, how should his grands are in the court,
+Widle they swear and my life beseech your flowers
+Agueu in thy weedd as stand this most wreck obedience
+Tear on thee short ofth, the than be fathom.
+But yet, my fancing.
+
+Go schaen our breast will they were well seeed.
+O trurn this shephething hate!
+By the weed full of the measures of a
+```
   
 #### ```ViT```
   * Vanilla ViT implementation for MNIST.
+
+[<img alt="mnist example" width="100px" src="examples/mnist.png" />](https://www.google.com/)
+
+```
+LABEL: 5
+PREDICTED: 5
+```
 
 ### Papers Used
 * [Transformer Paper](https://arxiv.org/abs/1706.03762)
