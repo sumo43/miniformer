@@ -3,6 +3,7 @@ import os
 from collections import Counter
 from miniformer.model import Transformer, Config
 from miniformer.trainer import Trainer
+import torch.nn as nn
 
 """
 GPT with character-level embeddings to generate shakespeare.
@@ -11,17 +12,17 @@ GPT with character-level embeddings to generate shakespeare.
 DATA_FILE = os.path.join('..', 'data', 'input.txt')
 
 chargpt_config = {
-    # model parameters. same as mingpt's gpt-mini config
+    # model parameters. smaller than chargpt model from mingpt
     'm' : None,
-    'k' : 64, # key dimension size
-    'v' : 64, # value dimension size
-    'd' : 384, # dimension of hidden state between blocks
+    'k' : 32, # key dimension size
+    'v' : 32, # value dimension size
+    'd' : 192, # dimension of hidden state between blocks
     'h' : 6, # number of heads
     'n_encoders' : 6, # number of encoder layers
     'n_decoders' : 6, # number of decoder layers
     'max_seq_length' : 128, # max m
     # hyperparameters for training
-    'lr' : 4e-4, # use lr scheduler later
+    'lr' : 5e-4, # use lr scheduler later
     'epochs': 10,
     'batch_size': 64
 }
@@ -52,18 +53,10 @@ class CharDataset:
     def __len__(self):
         return len(self.data) - (config.max_seq_length + 1)
 
+
 config = Config(**chargpt_config)
 dataset = CharDataset(DATA_FILE, config)
 model = Transformer(config)
-model.load_state_dict(torch.load('chargpt_iter16000.pt', map_location=torch.device('cpu')))
 model = model.to(config.device)
 trainer = Trainer(dataset, config)
 trainer.train(model, num_epochs=10, batch_size=config.batch_size)
-
-# Test the model
-
-ex_text = 'it is not'
-tok_text = list(map(dataset.get_ctoi, ex_text))
-out_tok = model(torch.tensor(tok_text).type(torch.LongTensor).to(config.device))
-
-print(str(map(dataset.get_itoc, out_tok)))
