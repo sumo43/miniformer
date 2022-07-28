@@ -138,4 +138,5 @@ data/*
 !data/.gitkeep
 !data/*sh
 examples/*pt
+.DS_Store
 

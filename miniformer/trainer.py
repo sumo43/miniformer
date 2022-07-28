@@ -9,20 +9,8 @@ class Trainer:
         self.config = config
         self.dataset = dataset
 
-    def train(self, model, **kwargs):
-        params = model.parameters()
-
-        optim_groups = [
-            {"params": [pn for pn in params if isinstance(pn, torch.nn.Linear) or isinstance(pn, torch.nn.Parameter)], "weight_decay": 0.1},
-            {"params": [pn for pn in params if not isinstance(pn, torch.nn.Linear and not isinstance(pn, torch.nn.Parameter))], "weight_decay": 0.0},
-        ]
-        optimizer = torch.optim.AdamW(optim_groups, lr=self.config.lr, betas=(0.9, 0.98))
-        loss_fn = torch.nn.CrossEntropyLoss()
-        running_loss = 0
-        model.train()
-
-        
-
+    def train(self, model, optimizer, **kwargs):
+ 
         # this works for chargpt, but needs to be generalized for models that need both x, y as inputs, like translators
         for epoch in range(self.config.epochs):
             for i, (x, y) in enumerate(self.dataloader):
