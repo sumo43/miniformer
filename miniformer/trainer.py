@@ -30,8 +30,21 @@ class Trainer:
                 optimizer.step()
                 running_loss += loss.item()
                 print(f'epoch {epoch} batch {i} loss: {loss.item()}')
-              
-               
+
+
+                if i % 500 == 0:
+                    # evaluate both the train and test score
+                    model.eval()
+                    with torch.no_grad():
+                        # sample from the model...
+                        context = "O God, O God!"
+                        x = torch.tensor([self.dataset.ctoi[s] for s in context], dtype=torch.long)[None,...].to(self.config.device)
+                        y = model.generate(x, 500, temperature=1.0, do_sample=True, top_k=10)[0]
+                        completion = ''.join([self.dataset.itoc[int(i)] for i in y])
+                        print(completion)
+                    
+                    model.train()
+                
                 if i % 1000 == 0:
                     torch.save(model.state_dict(), f'chargpt_iter{i}.pt')
 
@@ -54,7 +67,8 @@ class ViTTrainer:
                 model.zero_grad(set_to_none=True)
                 loss = loss_fn(y_pred.view(-1, 10), y)
                 loss.backward()
-                torch.nn.utils.clip_grad_norm_(model.parameters(), 0.1)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
                 optimizer.step()
                 running_loss += loss.item()
                 print(f'epoch {epoch} batch {i} loss: {loss.item()}')
+
