@@ -28,9 +28,8 @@ class Trainer:
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(model.parameters(), 0.5)
                 optimizer.step()
-                running_loss += loss.item()
-                print(f'epoch {epoch} batch {i} loss: {loss.item()}')
-
+                if i % 10 == 0:
+                    print(f'epoch {epoch} batch {i} loss: {loss.item()}')
 
                 if i % 500 == 0:
                     # evaluate both the train and test score
