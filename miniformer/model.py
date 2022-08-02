@@ -206,6 +206,7 @@ class Transformer(Module):
             # append sampled index to the running sequence and continue
             idx = torch.cat((idx, idx_next), dim=1)
         return idx
+
     def get_optimizer(self):
         self.wd_dict = {
             'P_q': False,
@@ -215,16 +216,22 @@ class Transformer(Module):
             'weight': True,
             'bias': True
         }
+
         wd_params = []
+        no_wd_params=[]
+
         for a, b in self.named_parameters():
             last = a.split('.')[-1]
             wd = self.wd_dict[last]
             if wd:
                 wd_params.append(b)
-        no_wd_params = {'params': [param for param in self.parameters() if param not in wd_params], 'weight_decay': 0.}
-        wd_params = {'params': wd_params, 'weight_decay': self.config.weight_decay}
+            else:
+                no_wd_params.append(b)
+        
+        wd_params = {'params': wd_params, 'weight_decay': 0.1}
+        no_wd_params= {'params':no_wd_params, 'weight_decay': 0.0}
 
-        return AdamW([no_wd_params, wd_params], lr=self.config.lr, betas=(0.9, 0.98))
+        return torch.optim.AdamW([no_wd_params, wd_params], lr=self.config.lr, betas=(0.9, 0.98))
 
 class ViT(Module):
     def __init__(self, config):

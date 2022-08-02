@@ -10,11 +10,15 @@ class Trainer:
         self.dataset = dataset
 
     def train(self, model, optimizer, **kwargs):
+
+        loss_fn = torch.nn.CrossEntropyLoss()
+        model.train()
+        running_loss = 0
  
         # this works for chargpt, but needs to be generalized for models that need both x, y as inputs, like translators
         for epoch in range(self.config.epochs):
             for i, (x, y) in enumerate(self.dataloader):
-                print(i)
+
                 x = x.to(self.config.device)
                 y = y.to(self.config.device)
                 y_pred = model(x)
@@ -26,46 +30,10 @@ class Trainer:
                 optimizer.step()
                 running_loss += loss.item()
                 print(f'epoch {epoch} batch {i} loss: {loss.item()}')
-                sy = ''
-                sy_pred = ''
-
-                for k in list(map(self.dataset.get_itoc, [int(j) for j in y[0]])):
-                    sy += k
-                for k in list(map(self.dataset.get_itoc, [int(j) for j in y_pred_argmax[0]])):
-                    sy_pred += k
-                print('---------------------------------------------------') 
-                print(sy)
-                print(sy_pred)
-                print('---------------------------------------------------')
-                # validation step - TODO make better
-                #if i % 500 == 499:
-                #    str = self.complete(model, "ROMEO:", 128)
-                #    running_loss /= 100
-                #print(f'epoch {self.epoch} batch {i} loss: {running_loss}')
-                #print(self.tokenizer.batch_decode(x)[0])
-                #print(self.tokenizer.batch_decode(y_test)[0])
-                #print(self.tokenizer.batch_decode(y_pred_argmax)[0])
+              
+               
                 if i % 1000 == 0:
                     torch.save(model.state_dict(), f'chargpt_iter{i}.pt')
-                
-                #self.complete(model, 'ROMEO:', 128
-
-    def complete(self, model, _start, length):
-        _in = torch.Tensor(list(map(self.dataset.get_ctoi, _start.lower()))) \
-        .type(torch.LongTensor) \
-        .to(self.config.device) \
-        .unsqueeze(0)   
-
-        for i in range(length):
-            _out = torch.argmax(model(_in[:, :self.config.max_seq_length]), -1)[-1:]
-            print(_in.shape)
-            print(_out.shape)
-            _in = torch.cat([_in, _out])
-        _in = list(_in[0])
-        a = ''
-        for i in _in:
-            a += self.dataset.get_itoc(int(i))
-        print(a)
 
 class ViTTrainer:
     def __init__(self, dataset, config):
