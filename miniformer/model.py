@@ -129,7 +129,7 @@ class Block(Module):
             torch.nn.Linear(config.d, config.d * 4),
             NewGELU(),
             torch.nn.Linear(config.d * 4, config.d),
-            torch.nn.Dropout(0.1)
+            torch.nn.Dropout(config.dropout)
         )
 
     def forward(self, x):
@@ -138,17 +138,6 @@ class Block(Module):
         return x
 
 class Transformer(Module):
-
-    def _init_weights(self, module):
-        if isinstance(module, nn.Linear):
-            torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
-            if module.bias is not None:
-                torch.nn.init.zeros_(module.bias)
-        elif isinstance(module, nn.Embedding):
-            torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
-        elif isinstance(module, nn.LayerNorm):
-            torch.nn.init.zeros_(module.bias)
-            torch.nn.init.ones_(module.weight)
 
     def __init__(self, config):
         super().__init__()
@@ -210,15 +199,8 @@ class Transformer(Module):
 
     def get_optimizer(self):
         self.wd_dict = {
-            'P_q': False,
-            'P_k': False,
-            'P_v': False,
-            'P_o': False,
-            'P_i': True,
             'weight': True,
             'bias': True,
-            'B_i': True,
-            'B_o': True
         }
 
         wd_params = []
@@ -227,7 +209,7 @@ class Transformer(Module):
         for a, b in self.named_parameters():
             last = a.split('.')[-1]
             wd = self.wd_dict[last]
-            if wd:
+            if isinstance(b, torch.nn.Linear) or wd:
                 wd_params.append(b)
             else:
                 no_wd_params.append(b)
@@ -244,8 +226,8 @@ class ViT(Module):
         self.device = config.device
         self.out_size = config.vocab_size
         patch_size = (4, 4)
-        flat_patch_size = 16
-        self.learnable_patch = torch.nn.Parameter(torch.randn(4 * 4,)).view(1, 1, 16)
+        flat_patch_size = patch_size[0] * patch_size[1]
+        self.learnable_patch = torch.nn.Parameter(torch.randn(flat_patch_size,)).view(1, 1, flat_patch_size)
         self.pos_embedding = torch.nn.Embedding(config.max_seq_length, config.d)
         self.patch_embedding = torch.nn.Linear(flat_patch_size, config.d)
         
@@ -253,17 +235,16 @@ class ViT(Module):
             *[Block(config, mask=False) for i in range(config.n_decoders)])
 
         self.head = nn.Sequential(
-            torch.nn.Linear(config.d, 10)
+            torch.nn.Linear(config.d, self.out_size)
         )  
         
         self.dropout = torch.nn.Dropout(config.dropout)
         self.ln = torch.nn.LayerNorm(config.d)
-        self.dumb = torch.nn.Linear(28 * 28, 128)
-        self.dumb2 = torch.nn.Linear(128, 10)
+        self.t = 50
 
     def forward(self, _input):
         batch_size, channels, width, height = _input.shape
-        pos = torch.arange(0, 49, dtype=torch.long, device=self.config.device).unsqueeze(0) # shape (1, t)
+        pos = torch.arange(0, t - 1, dtype=torch.long, device=self.config.device).unsqueeze(0) # shape (1, t)
         # encode the input as a bunch of flattened patches (last dim)
         # then append the learnable patch at zero-index. now we have a nice even seq length
         #_input = torch.cat([self.learnable_patch.expand(_input.shape[0], -1, 16), self.to_patches(_input)], dim=1)  
@@ -281,8 +262,8 @@ class ViT(Module):
     def to_patches(self, img):
         # b, 28, 28,
         batch_size, _, _, _ = img.shape
-        img = torch.nn.Unfold((4, 4), stride=4)(img).view(batch_size, 4, 4, 49)
+        img = torch.nn.Unfold(patch_size, stride=4)(img).view(batch_size, 4, 4, self.t - 1)
         img = img.transpose(3, 1)
         img = img.transpose(2, 3)
-        img = img.view(batch_size, 49, -1)
+        img = img.view(batch_size, self.t, -1)
         return img
