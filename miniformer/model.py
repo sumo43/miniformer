@@ -80,87 +80,37 @@ class MHA(torch.nn.Module):
 
     def __init__(self, config, mask=False):
         super().__init__()
-        """
-        self.P_q = torch.nn.Parameter(torch.nn.init.kaiming_uniform_(torch.zeros(config.h, config.d, config.k)), requires_grad=True)
-        self.P_k = torch.nn.Parameter(torch.nn.init.kaiming_uniform_(torch.zeros(config.h, config.d, config.v)), requires_grad=True)
-        self.P_v = torch.nn.Parameter(torch.nn.init.kaiming_uniform_(torch.zeros(config.h, config.d, config.v)), requires_grad=True)
-        """
-        self.P_i = torch.nn.Parameter(torch.nn.init.kaiming_uniform_(torch.zeros(config.h, config.d, config.v * 3)), requires_grad=True)
-        self.B_i = torch.nn.Parameter(torch.nn.init.kaiming_uniform_(torch.zeros(1, 1, 1, config.v * 3)), requires_grad=True)
-        self.P_o = torch.nn.Parameter(torch.nn.init.kaiming_uniform_(torch.zeros(config.h, config.d, config.v)), requires_grad=True)
-        self.B_o = torch.nn.Parameter(torch.nn.init.kaiming_uniform_(torch.zeros(1, 1, config.d)), requires_grad=True)
-
+        self.P_i = torch.nn.Parameter(torch.nn.init.kaiming_uniform_(torch.zeros(config.d, config.d * 3)), requires_grad=True)
+        self.P_o = torch.nn.Parameter(torch.nn.init.kaiming_uniform_(torch.zeros(config.d, config.d)), requires_grad=True)
         self.register_buffer('triu_mask', torch.tril(torch.ones((config.d, config.d))).view(1, 1, config.d, config.d))
         self.softmax = torch.nn.Softmax(dim=-1)
         self.attn_dropout = torch.nn.Dropout(config.dropout)
         self.resid_dropout = torch.nn.Dropout(config.dropout)
         self.config = config
-        self.rearr = Rearrange('b h m v -> b m (h v)')
 
     def forward(self, x):
         # linear layers before attention
-        transformed = torch.einsum('bmd, hde -> bhme', x, self.P_i) + self.B_i
-        Q, K, V = transformed.split(self.config.v, -1)
+        # (bmd) x (de) -> bme -> bmhk.view/transpose
+        b, m, d = x.shape
+        transformed = x @ self.P_i
+        transformed = transformed.view(b, m, self.config.h, 3 * self.config.k)
+        Q, K, V = transformed.transpose(2, 1).split(self.config.k, -1)
         # attention
         logits = torch.einsum('bhmk, bhnk -> bhmn', Q, K)
         logits = logits / (1.0 * math.sqrt(self.config.k))
         logits = self.mask(logits)
         key_weights = self.softmax(logits)
         key_weights = self.attn_dropout(key_weights)
-        o = torch.einsum('bhmm, bhmv -> bhmv', key_weights, V)
+        o = key_weights @ V
         # linear layer after attention
-        y = torch.einsum('bhmv, hdv -> bmd', o, self.P_o) + self.B_o
+        y = o.transpose(1, 2).contiguous().view(b, m, self.config.h * self.config.k)
+        y = y @ self.P_o
         return self.resid_dropout(y)
     
     def mask(self, x):
         seq_length = x.shape[-1]
         return x.masked_fill(self.triu_mask[:, :, :seq_length, :seq_length] == 0, float('-inf'))
 
-    """
-
-    def __init__(self, config, mask):
-        super().__init__()
-        assert config.d % config.h == 0
-        # key, query, value projections for all heads, but in a batch
-        self.c_attn = nn.Linear(config.d, 3 * config.d)
-        # output projection
-        self.c_proj = nn.Linear(config.d, config.d)
-        # regularization
-        self.attn_dropout = nn.Dropout(0.1)
-        self.resid_dropout = nn.Dropout(0.1)
-        # causal mask to ensure that attention is only applied to the left in the input sequence
-        self.register_buffer("bias", torch.tril(torch.ones(128, 128))
-                                     .view(1, 1, 128, 128))
-        self.n_head = config.h
-        self.n_embd = config.d
-
-    def forward(self, x):
-        B, T, C = x.size() # batch size, sequence length, embedding dimensionality (n_embd)
-
-        # calculate query, key, values for all heads in batch and move head forward to be the batch dim
-        q, k ,v  = self.c_attn(x).split(self.n_embd, dim=2)
-        k = k.view(B, T, self.n_head, C // self.n_head).transpose(1, 2) # (B, nh, T, hs)
-        q = q.view(B, T, self.n_head, C // self.n_head).transpose(1, 2) # (B, nh, T, hs)
-        v = v.view(B, T, self.n_head, C // self.n_head).transpose(1, 2) # (B, nh, T, hs)
-
-        # causal self-attention; Self-attend: (B, nh, T, hs) x (B, nh, hs, T) -> (B, nh, T, T)
-        att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
-        att = att.masked_fill(self.bias[:,:,:T,:T] == 0, float('-inf'))
-        att = F.softmax(att, dim=-1)
-        att = self.attn_dropout(att)
-        y = att @ v # (B, nh, T, T) x (B, nh, T, hs) -> (B, nh, T, hs)
-        y = y.transpose(1, 2).contiguous().view(B, T, C) # re-assemble all head outputs side by side
-
-        # output projection
-        y = self.resid_dropout(self.c_proj(y))
-        return y
-
-        def mask(self, x):
-        seq_length = x.shape[-1]
-        return x.masked_fill(self.triu_mask[:, :, :seq_length, :seq_length] == 0, float('-inf'))
-    
-    """
-        
 class Block(Module):
     """
     A transformer block. Can act as both an encoder (ViT) or standalone decoder (GPT).
