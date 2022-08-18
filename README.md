@@ -4,7 +4,7 @@ Minimal Transformer re-implementation inspired by minGPT. Can be used as a Langu
 
 ## Description
 
-I made this repository to help me learn about transformers and attention, so I might end up adding other implementation of transformer architectures later on. For now, I only implemented decoder-only and encoder-only architectures, which are used in GPT and ViT respectfully. Code inspired by karpathy/mingpt.
+I made this repository to help me learn about transformers and attention, so I might end up adding other implementation of transformer architectures later on. For now, I only implemented decoder-only and encoder-only architectures, which are used in GPT and ViT respectfully.
 
 ## Setup
 
